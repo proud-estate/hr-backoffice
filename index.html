@@ -42,6 +42,15 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .co.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .co.on small{color:var(--accent-fg)}
 .co.add{border-style:dashed;color:var(--accent)}
+.auth{min-height:85vh;display:grid;place-items:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.authcard{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:14px}
+.authcard h1{font-family:var(--f-head);font-size:1.4rem;margin:0 0 2px}
+.authcard .btn.primary{padding-block:11px}
+.lock{width:44px;height:44px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.forgot{display:flex;flex-direction:column;gap:8px}
+.forgot summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+.forgot p{margin:8px 0}
+.whobar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -113,7 +122,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
 @media print{
   @page{size:A4;margin:10mm}
   body{background:#fff}
-  header.top,.no-print,section.panel:not(#tab-slips){display:none!important}
+  #auth,header.top,.no-print,section.panel:not(#tab-slips){display:none!important}
   main .wrap{padding:0}
   #tab-slips{border:0;padding:0;background:#fff}
   .slip{border:1px solid #999;max-width:none;page-break-inside:avoid;break-inside:avoid;margin-bottom:6mm}
@@ -124,6 +133,23 @@ td input{width:96px;padding:4px 6px;text-align:right}
 </head>
 <body>
 
+<div id="auth" class="auth">
+  <form id="auth-form" class="authcard" autocomplete="on">
+    <div class="lock" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" fill="none"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none"/></svg></div>
+    <div><h1 id="auth-title">เข้าสู่ระบบ HR</h1><p class="hint" id="auth-sub">สำหรับเจ้าหน้าที่ HR เท่านั้น</p></div>
+    <label class="f">ชื่อผู้ใช้<input id="a-user" autocomplete="username" required></label>
+    <label class="f">รหัสผ่าน<input id="a-pw" type="password" autocomplete="current-password" required></label>
+    <label class="f" id="a-pw2-wrap" hidden>ยืนยันรหัสผ่าน<input id="a-pw2" type="password" autocomplete="new-password"></label>
+    <button class="btn primary" type="submit" id="a-go">เข้าสู่ระบบ</button>
+    <div id="a-msg" role="alert"></div>
+    <details class="forgot" id="a-forgot"><summary>ลืมรหัสผ่าน</summary>
+      <p class="hint">ข้อมูลถูกเข้ารหัสด้วยรหัสผ่าน จึงกู้คืนรหัสผ่านไม่ได้ ให้ HR คนอื่นที่มีบัญชีเข้าสู่ระบบแล้วตั้งรหัสใหม่ให้ หรือนำไฟล์สำรองข้อมูลมากู้คืน ถ้าไม่มีทั้งสองอย่าง ต้องลบข้อมูลในเครื่องนี้แล้วเริ่มใหม่</p>
+      <button type="button" class="btn danger" id="a-wipe">ลบข้อมูลทั้งหมดในเครื่องนี้และเริ่มใหม่</button>
+    </details>
+  </form>
+</div>
+
+<div id="app" hidden>
 <header class="top">
   <div class="wrap">
     <div class="brand">
@@ -131,7 +157,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
         <h1 id="co-name">บริษัท</h1>
         <div class="sub">ระบบ HR · วันหยุด การลา และเงินเดือน <span class="sample">ข้อมูลตัวอย่าง</span></div>
       </div>
-      <div class="sub" id="today"></div>
+      <div class="whobar"><span class="sub" id="today"></span><span class="sub">ผู้ใช้ <b id="me"></b></span><button class="btn small" type="button" id="logout">ออกจากระบบ</button></div>
     </div>
     <div class="cowrap">
       <span class="colabel">เลือกบริษัทที่ต้องการกรอก</span>
@@ -148,6 +174,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
       <button role="tab" data-tab="records">บันทึกลา / ขาด / สาย</button>
       <button role="tab" data-tab="payroll">เงินเดือน</button>
       <button role="tab" data-tab="slips">สลิปเงินเดือน</button>
+      <button role="tab" data-tab="users">ผู้ใช้และสำรองข้อมูล</button>
     </nav>
   </div>
 </header>
@@ -238,7 +265,35 @@ td input{width:96px;padding:4px 6px;text-align:right}
   <div class="slips" id="slips"></div>
 </section>
 
+<!-- ผู้ใช้ -->
+<section class="panel" id="tab-users" hidden>
+  <div><h2>บัญชีผู้ใช้ HR</h2><p class="hint">เฉพาะคนที่มีบัญชีเท่านั้นที่เข้าระบบได้ ข้อมูลทั้งหมดถูกเข้ารหัสด้วยรหัสผ่าน ระบบออกจากระบบให้เองเมื่อไม่มีการใช้งาน 15 นาที</p></div>
+  <div class="tbl"><table id="user-table"></table></div>
+  <form id="u-add" class="row" hidden>
+    <label class="f" style="flex:1 1 160px">ชื่อผู้ใช้ใหม่<input id="u-name" required autocomplete="off"></label>
+    <label class="f" style="flex:1 1 160px">รหัสผ่าน (อย่างน้อย 8 ตัว)<input id="u-pw" type="password" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn primary" type="submit">เพิ่มผู้ใช้ HR</button>
+  </form>
+  <span id="u-msg"></span>
+  <h3>เปลี่ยนรหัสผ่านของฉัน</h3>
+  <form id="u-chg" class="row">
+    <label class="f" style="flex:1 1 160px">รหัสผ่านใหม่<input id="u-new" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label class="f" style="flex:1 1 160px">ยืนยันรหัสผ่านใหม่<input id="u-new2" type="password" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn primary" type="submit">เปลี่ยนรหัสผ่าน</button>
+  </form>
+  <span id="c-msg"></span>
+  <h3>สำรองและกู้คืนข้อมูล</h3>
+  <p class="hint">ไฟล์สำรองถูกเข้ารหัสไว้ ต้องใช้ชื่อผู้ใช้และรหัสผ่านเดิมจึงจะเปิดได้ ใช้ย้ายข้อมูลไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์ ควรสำรองทุกสิ้นเดือน</p>
+  <div class="row">
+    <button class="btn primary" type="button" id="bk-export">ดาวน์โหลดไฟล์สำรอง</button>
+    <label class="btn" for="bk-file" style="display:inline-block">กู้คืนจากไฟล์สำรอง</label>
+    <input type="file" id="bk-file" accept=".json,application/json" hidden>
+    <span id="bk-msg"></span>
+  </div>
+</section>
+
 </div></main>
+</div>
 
 <script>
 const KEY='hr-payroll-v2';
@@ -272,13 +327,38 @@ const SAMPLE=()=>{const b=BASE();b.employees.forEach(e=>e.start=STARTS[e.id]);
   const mk=(id,name,ids)=>({...newCompany(id,name,b),holidays:BASE().holidays,employees:b.employees.filter(e=>ids.includes(e.id)),records:b.records.filter(r=>ids.includes(r.emp)),
     extra:{'2026-11':Object.fromEntries(Object.entries(b.extra['2026-11']).filter(([k])=>ids.includes(k)))}});
   return {current:'c1',companies:[mk('c1','บริษัท สยามเทรดดิ้ง จำกัด',['E001','E002','E005','E008']),mk('c2','บริษัท รุ่งเรืองขนส่ง จำกัด',['E003','E004','E007']),mk('c3','บริษัท กรีนฟู้ด จำกัด',['E006','E009'])]}};
-let ROOT;try{ROOT=JSON.parse(localStorage.getItem(KEY))}catch(e){ROOT=null}
-if(!ROOT||!Array.isArray(ROOT.companies)||!ROOT.companies.length){let old=null;try{old=JSON.parse(localStorage.getItem('hr-payroll-v1'))}catch(e){}
-  ROOT=old&&old.employees?{current:'c1',companies:[{id:'c1',...old}]}:SAMPLE()}
+/* ---------- encrypted storage + login ---------- */
+const AUTH_KEY='hr-auth-v1',VAULT_KEY='hr-vault-v1',ITER=310000;
+const te=new TextEncoder(),td=new TextDecoder();
+function b64(buf){const a=new Uint8Array(buf);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)}
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const readJSON=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const writeJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+async function kek(pw,salt){const base=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function wrapFor(u,pw,raw,role){const salt=rnd(16),iv=rnd(12);const w=await crypto.subtle.encrypt({name:'AES-GCM',iv},await kek(pw,salt),raw);
+  return {u,role,salt:b64(salt),iv:b64(iv),wrapped:b64(w)}}
+let ROOT=null,DK=null,DKraw=null,ME=null;
+const getAuth=()=>{const a=readJSON(AUTH_KEY);return a&&Array.isArray(a.users)&&a.users.length?a:null};
+const validRoot=r=>r&&Array.isArray(r.companies)&&r.companies.length;
+function legacyData(){const v2=readJSON(KEY);if(validRoot(v2))return v2;const v1=readJSON('hr-payroll-v1');return v1&&v1.employees?{current:'c1',companies:[{id:'c1',...v1}]}:null}
+async function persist(){if(!DK||!ROOT)return;const iv=rnd(12);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},DK,te.encode(JSON.stringify(ROOT)));
+  if(!writeJSON(VAULT_KEY,{iv:b64(iv),ct:b64(ct)}))console.warn('บันทึกข้อมูลไม่สำเร็จ')}
+let saveChain=Promise.resolve();
+const save=()=>{saveChain=saveChain.then(persist).catch(e=>console.warn(e))};
+async function setDK(raw){DKraw=new Uint8Array(raw);DK=await crypto.subtle.importKey('raw',DKraw,'AES-GCM',false,['encrypt','decrypt'])}
+async function unlock(u,pw){const A=getAuth();const rec=A&&A.users.find(x=>x.u.toLowerCase()===u.trim().toLowerCase());
+  if(!rec){await kek(pw,rnd(16));throw new Error('bad')}
+  let raw;try{raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(rec.iv)},await kek(pw,unb64(rec.salt)),unb64(rec.wrapped))}catch(e){throw new Error('bad')}
+  await setDK(raw);ME=rec;const V=readJSON(VAULT_KEY);
+  if(V){try{ROOT=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(V.iv)},DK,unb64(V.ct))))}catch(e){throw new Error('vault')}}
+  if(!validRoot(ROOT)){ROOT=SAMPLE();await persist()}}
+async function setupFirst(u,pw){const raw=rnd(32);const rec=await wrapFor(u.trim(),pw,raw,'admin');
+  writeJSON(AUTH_KEY,{v:1,users:[rec]});await setDK(raw);ME=rec;ROOT=legacyData()||SAMPLE();await persist();
+  try{localStorage.removeItem(KEY);localStorage.removeItem('hr-payroll-v1')}catch(e){}}
 let S,st;
 function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0];ROOT.current=S.id;st=S.settings}
-useCompany(ROOT.current);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ROOT))}catch(e){}};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -288,7 +368,7 @@ const emp=id=>S.employees.find(e=>e.id===id);
 function flash(el,text,ok=true){el.className='msg '+(ok?'ok':'err');el.textContent=text;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';el.className=''},3500)}
 
 /* ---------- tabs ---------- */
-const tabs=['employees','holidays','records','payroll','slips'];
+const tabs=['employees','holidays','records','payroll','slips','users'];
 let curTab='employees';
 function show(t){if(!tabs.includes(t))t='employees';curTab=t;tabs.forEach(x=>{$('tab-'+x).hidden=x!==t});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
@@ -342,7 +422,7 @@ Object.entries(sMap).forEach(([k,v])=>$('s-'+k).onchange=e=>{st[v]=k==='co'?e.ta
 $('hol-form').onsubmit=ev=>{ev.preventDefault();const d=$('h-date').value;if(S.holidays.some(h=>h.date===d))return;
   S.holidays.push({date:d,name:$('h-name').value.trim()});save();ev.target.reset();renderHolidays()};
 $('reset-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลที่กรอกจะหายทั้งหมด';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัทและกลับเป็นข้อมูลตัวอย่าง'},4000);return}
-  ROOT=SAMPLE();save();location.reload()};
+  ROOT=SAMPLE();save();saveChain.then(()=>location.reload())};
 $('del-co-btn').onclick=e=>{const b=e.target;if(ROOT.companies.length<2){b.textContent='ต้องมีอย่างน้อย 1 บริษัท';setTimeout(()=>b.textContent='ลบบริษัทนี้',3000);return}
   if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
   b.classList.remove('armed');b.textContent='ลบบริษัทนี้';ROOT.companies=ROOT.companies.filter(c=>c.id!==S.id);switchCompany(ROOT.companies[0].id)};
@@ -420,14 +500,65 @@ const framed=(()=>{try{return window.self!==window.top}catch(e){return true}})()
 if(framed){$('print-btn').hidden=true;$('print-note').hidden=false}
 $('print-btn').onclick=()=>window.print();
 
+/* ---------- users & backup ---------- */
+function renderUsers(){const A=getAuth();const admin=ME.role==='admin';$('u-add').hidden=!admin;
+  $('user-table').innerHTML=`<thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th></th></tr></thead><tbody>${A.users.map(x=>`<tr><td>${esc(x.u)}${x.u===ME.u?' <span class="pill t-holiday">คุณ</span>':''}</td><td>${x.role==='admin'?'ผู้ดูแลระบบ':'เจ้าหน้าที่ HR'}</td>
+   <td>${admin&&x.u!==ME.u?`<button class="btn small" data-reset="${esc(x.u)}">ตั้งรหัสใหม่</button> <button class="btn small danger" data-du="${esc(x.u)}">ลบ</button>`:''}</td></tr>`).join('')}</tbody>`;
+  $('user-table').querySelectorAll('[data-du]').forEach(b=>b.onclick=()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อลบ';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
+    const A=getAuth();A.users=A.users.filter(x=>x.u!==b.dataset.du);writeJSON(AUTH_KEY,A);renderUsers()});
+  $('user-table').querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{$('u-name').value=b.dataset.reset;$('u-pw').value='';$('u-pw').focus();flash($('u-msg'),'ใส่รหัสผ่านใหม่ให้ '+b.dataset.reset+' แล้วกด เพิ่มผู้ใช้ HR ระบบจะแทนที่รหัสเดิม')})}
+$('u-add').onsubmit=async ev=>{ev.preventDefault();if(ME.role!=='admin')return;const u=$('u-name').value.trim(),pw=$('u-pw').value;
+  if(pw.length<8)return flash($('u-msg'),'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',false);
+  const A=getAuth();const old=A.users.find(x=>x.u.toLowerCase()===u.toLowerCase());if(old&&old.u===ME.u)return flash($('u-msg'),'เปลี่ยนรหัสของตัวเองที่หัวข้อด้านล่าง',false);
+  const rec=await wrapFor(old?old.u:u,pw,DKraw,old?old.role:'hr');A.users=A.users.filter(x=>x!==old&&x.u!==rec.u);A.users.push(rec);writeJSON(AUTH_KEY,A);
+  ev.target.reset();flash($('u-msg'),old?'ตั้งรหัสผ่านใหม่ให้ '+rec.u+' แล้ว':'เพิ่มผู้ใช้ '+rec.u+' แล้ว');renderUsers()};
+$('u-chg').onsubmit=async ev=>{ev.preventDefault();const p1=$('u-new').value,p2=$('u-new2').value;
+  if(p1!==p2)return flash($('c-msg'),'รหัสผ่านทั้งสองช่องไม่ตรงกัน',false);
+  const A=getAuth();const rec=await wrapFor(ME.u,p1,DKraw,ME.role);A.users=A.users.map(x=>x.u===ME.u?rec:x);writeJSON(AUTH_KEY,A);ME=rec;ev.target.reset();flash($('c-msg'),'เปลี่ยนรหัสผ่านแล้ว ใช้รหัสใหม่ในการเข้าครั้งถัดไป')};
+$('bk-export').onclick=async()=>{await saveChain;const data={app:'hr-payroll',v:1,exported:new Date().toISOString(),auth:getAuth(),vault:readJSON(VAULT_KEY)};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`hr-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  flash($('bk-msg'),framed?'ในหน้าตัวอย่างนี้ดาวน์โหลดไม่ได้ ปุ่มนี้ใช้ได้บนเว็บไซต์ของคุณ':'ดาวน์โหลดไฟล์สำรองแล้ว เก็บไว้ในที่ปลอดภัย',!framed)};
+$('bk-file').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(e){d=null}
+  if(!d||d.app!=='hr-payroll'||!d.auth||!d.vault)return flash($('bk-msg'),'ไฟล์นี้ไม่ใช่ไฟล์สำรองของระบบ HR',false);
+  await saveChain;writeJSON(AUTH_KEY,d.auth);writeJSON(VAULT_KEY,d.vault);flash($('bk-msg'),'กู้คืนแล้ว กำลังออกจากระบบ ให้เข้าสู่ระบบด้วยบัญชีในไฟล์สำรอง');setTimeout(()=>location.reload(),1800)};
+
+/* ---------- login screen ---------- */
+let fails=0,idleT=null;
+const IDLE_MS=15*60*1000;
+function logout(){saveChain.then(()=>location.reload())}
+function bumpIdle(){clearTimeout(idleT);idleT=setTimeout(logout,IDLE_MS)}
+$('logout').onclick=logout;
+const firstRun=!getAuth();
+if(firstRun){$('auth-title').textContent='ตั้งค่าบัญชี HR ครั้งแรก';
+  $('auth-sub').textContent='สร้างบัญชีผู้ดูแลระบบสำหรับเครื่องนี้ ข้อมูลทั้งหมดจะถูกเข้ารหัสด้วยรหัสผ่านนี้ ถ้าลืมรหัสผ่านจะกู้คืนข้อมูลไม่ได้';
+  $('a-pw2-wrap').hidden=false;$('a-pw2').required=true;$('a-pw').autocomplete='new-password';$('a-go').textContent='สร้างบัญชีและเข้าสู่ระบบ';$('a-forgot').hidden=true}
+$('a-wipe').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทในเครื่องนี้จะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบข้อมูลทั้งหมดในเครื่องนี้และเริ่มใหม่'},5000);return}
+  try{[AUTH_KEY,VAULT_KEY,KEY,'hr-payroll-v1'].forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()};
+$('auth-form').onsubmit=async ev=>{ev.preventDefault();const msg=$('a-msg'),go=$('a-go');const u=$('a-user').value.trim(),pw=$('a-pw').value;
+  if(!window.crypto||!crypto.subtle)return flash(msg,'เบราว์เซอร์นี้เข้ารหัสข้อมูลไม่ได้ ให้เปิดเว็บผ่านลิงก์ https หรือใช้ Chrome / Edge รุ่นใหม่',false);
+  if(firstRun){if(u.length<3)return flash(msg,'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร',false);
+    if(pw.length<8)return flash(msg,'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',false);
+    if(pw!==$('a-pw2').value)return flash(msg,'รหัสผ่านทั้งสองช่องไม่ตรงกัน',false)}
+  go.disabled=true;const label=go.textContent;go.textContent='กำลังตรวจสอบ...';
+  try{if(firstRun)await setupFirst(u,pw);else await unlock(u,pw);startApp()}
+  catch(e){fails++;$('a-pw').value='';
+    if(e.message==='vault')flash(msg,'เปิดข้อมูลไม่ได้ ข้อมูลในเครื่องนี้อาจเสียหาย ให้กู้คืนจากไฟล์สำรอง',false);
+    else flash(msg,fails>=5?'ใส่ผิดหลายครั้ง รอ 30 วินาทีแล้วลองใหม่':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',false);
+    if(fails>=5){fails=0;setTimeout(()=>{go.disabled=false;go.textContent=label},30000);return}}
+  go.disabled=false;go.textContent=label};
+
 /* ---------- init ---------- */
-function render(t){({employees:renderEmployees,holidays:renderHolidays,records:renderRecords,payroll:renderPayroll,slips:()=>{renderPicker($('slip-picker'),'slip');renderSlips()}})[t]()}
-$('co-name').textContent=st.company;renderCoBar();
-$('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-$('r-date').value=now.toISOString().slice(0,10);
-['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
-S.employees.forEach(e=>picks.slip.add(e.id));
-let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'payroll');
+function render(t){({employees:renderEmployees,holidays:renderHolidays,records:renderRecords,payroll:renderPayroll,slips:()=>{renderPicker($('slip-picker'),'slip');renderSlips()},users:renderUsers})[t]()}
+function startApp(){useCompany(ROOT.current);$('auth').hidden=true;$('app').hidden=false;$('me').textContent=ME.u;
+  $('co-name').textContent=st.company;renderCoBar();
+  $('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  $('r-date').value=now.toISOString().slice(0,10);
+  ['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
+  S.employees.forEach(e=>picks.slip.add(e.id));
+  ['pointerdown','keydown','scroll'].forEach(t=>addEventListener(t,bumpIdle,{passive:true}));bumpIdle();
+  let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'payroll')}
+$('a-user').focus();
 </script>
 
 </body>
