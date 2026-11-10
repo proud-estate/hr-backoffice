@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ระบบ HR และเงินเดือน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ledger-style office tool — one header band, tab rail, single working column of panels */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --sunk:#e8ecea; --line:#d3dad7;
+  --fg:#18231f; --muted:#5b6964; --accent:#14634f; --accent-fg:#ffffff; --accent-soft:#dcefe8;
+  --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#a3302a; --bad-soft:#f8e1df; --good:#1f6b3a;
+  --paper:#ffffff; --paper-ink:#1b1f1d; --paper-line:#c9d0cd;
+  --f-head:"Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,"Noto Sans Thai",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211e; --sunk:#0d1311; --line:#2c3935;
+  --fg:#e3ebe8; --muted:#97a8a2; --accent:#4fbf9b; --accent-fg:#06221a; --accent-soft:#18372e;
+  --warn:#e2a74c; --warn-soft:#3a2c14; --bad:#ef8b83; --bad-soft:#3d1c1a; --good:#7fd29c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211e; --sunk:#0d1311; --line:#2c3935;
+  --fg:#e3ebe8; --muted:#97a8a2; --accent:#4fbf9b; --accent-fg:#06221a; --accent-soft:#18372e;
+  --warn:#e2a74c; --warn-soft:#3a2c14; --bad:#ef8b83; --bad-soft:#3d1c1a; --good:#7fd29c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-family:var(--f-head);font-size:1.45rem;margin:0;text-wrap:balance}
+.brand .sub{color:var(--muted);font-size:.85rem}
+.cowrap{display:flex;flex-direction:column;gap:8px}
+.colabel{font-size:.75rem;color:var(--muted);letter-spacing:.04em}
+.cobar{display:flex;flex-wrap:wrap;gap:8px}
+.co{font:500 .9rem var(--f-body);border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:7px 12px;cursor:pointer;display:flex;gap:8px;align-items:baseline;max-width:100%}
+.co small{color:var(--muted);font-size:.75rem;font-family:var(--f-num)}
+.co.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.co.on small{color:var(--accent-fg)}
+.co.add{border-style:dashed;color:var(--accent)}
+.sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main .wrap{padding-block:22px 48px;display:flex;flex-direction:column;gap:20px}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+h2{font-family:var(--f-head);font-size:1.15rem;margin:0}
+h3{font-family:var(--f-head);font-size:1rem;margin:0}
+.hint{color:var(--muted);font-size:.85rem;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
+input,select{font:inherit;font-size:.95rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-width:0;width:100%}
+input[type=number]{font-family:var(--f-num)}
+.btn{font:600 .9rem var(--f-body);border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.small{padding:4px 10px;font-size:.8rem;font-weight:500}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:var(--surface)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--sunk);color:var(--muted);font-weight:500;font-size:.78rem;letter-spacing:.02em}
+td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:600;background:var(--sunk)}
+td input{width:96px;padding:4px 6px;text-align:right}
+.neg{color:var(--bad)}
+.net{color:var(--good);font-weight:600}
+.pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--fg)}
+.pill.t-holiday{background:var(--accent-soft);color:var(--accent)}
+.pill.t-absent,.pill.t-unpaid{background:var(--bad-soft);color:var(--bad)}
+.pill.t-late{background:var(--warn-soft);color:var(--warn)}
+.picker{display:flex;flex-direction:column;gap:8px}
+.picker .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--bg);font-size:.9rem;min-width:0}
+.chip input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip small{color:var(--muted);font-family:var(--f-num);font-size:.72rem}
+.chip:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.msg{font-size:.88rem;padding:8px 12px;border-radius:7px}
+.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.meter{height:6px;background:var(--sunk);border-radius:4px;overflow:hidden;width:90px;display:inline-block;vertical-align:middle;margin-left:6px}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter i.over{background:var(--bad)}
+.slips{display:flex;flex-direction:column;gap:18px;align-items:center}
+.slip{background:var(--paper);color:var(--paper-ink);border:1px solid var(--paper-line);width:100%;max-width:760px;padding:24px 26px;font-size:13px;line-height:1.5;border-radius:4px}
+.slip .hd{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--paper-ink);padding-bottom:10px}
+.slip .hd b{font-family:var(--f-head);font-size:17px;display:block}
+.slip .hd .r{text-align:right}
+.slip .who{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px 16px;padding:10px 0;border-bottom:1px solid var(--paper-line)}
+.slip .who span{color:#5d6662}
+.slip .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-top:10px}
+.slip .cols h4{margin:0 0 6px;font-size:12px;letter-spacing:.05em;color:#5d6662;font-weight:600}
+.slip .li{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dotted var(--paper-line)}
+.slip .li em{font-style:normal;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.slip .tot{display:flex;justify-content:space-between;font-weight:600;padding-top:6px}
+.slip .netbox{margin-top:14px;display:flex;justify-content:space-between;align-items:center;border:2px solid var(--paper-ink);padding:10px 14px;font-family:var(--f-head);font-size:16px}
+.slip .netbox em{font-style:normal;font-family:var(--f-num);font-size:19px;font-weight:500}
+.slip .att{margin-top:12px;font-size:12px;color:#4c5551}
+.slip .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px;text-align:center;font-size:12px}
+.slip .sign div{border-top:1px solid var(--paper-ink);padding-top:4px}
+.note-print{font-size:.85rem;color:var(--warn);background:var(--warn-soft);padding:8px 12px;border-radius:7px}
+@media (max-width:560px){.slip .cols{grid-template-columns:1fr}.slip{padding:18px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  header.top,.no-print,section.panel:not(#tab-slips){display:none!important}
+  main .wrap{padding:0}
+  #tab-slips{border:0;padding:0;background:#fff}
+  .slip{border:1px solid #999;max-width:none;page-break-inside:avoid;break-inside:avoid;margin-bottom:6mm}
+  .slips{gap:0}
+}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <h1 id="co-name">บริษัท</h1>
+        <div class="sub">ระบบ HR · วันหยุด การลา และเงินเดือน <span class="sample">ข้อมูลตัวอย่าง</span></div>
+      </div>
+      <div class="sub" id="today"></div>
+    </div>
+    <div class="cowrap">
+      <span class="colabel">เลือกบริษัทที่ต้องการกรอก</span>
+      <div class="cobar" id="co-bar"></div>
+      <form id="co-add" class="row" hidden>
+        <label class="f" style="flex:1 1 220px">ชื่อบริษัทใหม่<input id="co-new" required placeholder="เช่น บริษัท ตัวอย่าง จำกัด"></label>
+        <button class="btn primary" type="submit">เพิ่มบริษัท</button>
+        <button class="btn" type="button" id="co-add-cancel">ยกเลิก</button>
+      </form>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="employees">พนักงาน</button>
+      <button role="tab" data-tab="holidays">วันหยุดและโควตา</button>
+      <button role="tab" data-tab="records">บันทึกลา / ขาด / สาย</button>
+      <button role="tab" data-tab="payroll">เงินเดือน</button>
+      <button role="tab" data-tab="slips">สลิปเงินเดือน</button>
+    </nav>
+  </div>
+</header>
+
+<main><div class="wrap">
+
+<!-- พนักงาน -->
+<section class="panel" id="tab-employees" hidden>
+  <div><h2>ข้อมูลพนักงาน</h2><p class="hint">กรอกครั้งเดียว แล้วหน้าอื่นจะใช้ติ๊กเลือกได้เลย</p></div>
+  <form id="emp-form" class="grid">
+    <label class="f">รหัสพนักงาน<input id="e-id" required placeholder="E010"></label>
+    <label class="f">ชื่อ-นามสกุล<input id="e-name" required></label>
+    <label class="f">แผนก<input id="e-dept" list="dl-dept" placeholder="พิมพ์หรือเลือกจากรายการ"></label>
+    <label class="f">ตำแหน่ง<input id="e-pos" list="dl-pos" placeholder="พิมพ์หรือเลือกจากรายการ"></label>
+    <label class="f">วันเริ่มงาน<input id="e-start" type="date"></label>
+    <datalist id="dl-dept"></datalist><datalist id="dl-pos"></datalist>
+    <label class="f">เงินเดือน (บาท)<input id="e-salary" type="number" min="0" step="1" required></label>
+    <label class="f">ค่าน้ำมัน / เดือน<input id="e-fuel" type="number" min="0" step="1" value="0"></label>
+    <label class="f">ค่าโทรศัพท์ / เดือน<input id="e-phone" type="number" min="0" step="1" value="0"></label>
+    <label class="f">บัญชีธนาคาร<input id="e-bank" placeholder="ธนาคาร เลขบัญชี"></label>
+    <div class="row" style="grid-column:1/-1">
+      <button class="btn primary" type="submit" id="e-save">เพิ่มพนักงาน</button>
+      <button class="btn" type="button" id="e-cancel" hidden>ยกเลิกการแก้ไข</button>
+      <span id="e-msg"></span>
+    </div>
+  </form>
+  <div class="tbl"><table id="emp-table"></table></div>
+</section>
+
+<!-- วันหยุด -->
+<section class="panel" id="tab-holidays" hidden>
+  <div><h2>ตั้งค่าวันหยุดและโควตาการลา</h2><p class="hint">วันหยุดบังคับจะหักโควตาวันหยุดประเพณีของพนักงานทุกคนอัตโนมัติ วันที่เหลือพนักงานแจ้งหยุดเองได้</p></div>
+  <div class="grid">
+    <label class="f">ชื่อบริษัท<input id="s-co"></label>
+    <label class="f">ปี (ค.ศ.)<input id="s-year" type="number"></label>
+    <label class="f">วันหยุดประเพณี / ปี<input id="s-hq" type="number" min="13"></label>
+    <label class="f">ลาป่วย / ปี<input id="s-sick" type="number" min="0"></label>
+    <label class="f">ลากิจ / ปี<input id="s-pers" type="number" min="0"></label>
+    <label class="f">ลาพักร้อน / ปี<input id="s-vac" type="number" min="0"></label>
+    <label class="f">ประกันสังคม (%)<input id="s-sso" type="number" step="0.1" min="0"></label>
+    <label class="f">ฐานเงินเดือนสูงสุดประกันสังคม<input id="s-cap" type="number" min="0"></label>
+  </div>
+  <p class="hint">ตรวจสอบอัตราและเพดานประกันสังคมล่าสุดกับสำนักงานประกันสังคมก่อนใช้งานจริง</p>
+  <h3>วันหยุดบังคับของบริษัท</h3>
+  <form id="hol-form" class="row">
+    <label class="f" style="flex:1 1 150px">วันที่<input id="h-date" type="date" required></label>
+    <label class="f" style="flex:2 1 200px">ชื่อวันหยุด<input id="h-name" required placeholder="เช่น วันสงกรานต์"></label>
+    <button class="btn primary" type="submit">เพิ่มวันหยุด</button>
+  </form>
+  <div id="hol-summary" class="msg ok"></div>
+  <div class="tbl"><table id="hol-table"></table></div>
+  <div class="row"><button class="btn danger" id="del-co-btn" type="button">ลบบริษัทนี้</button><button class="btn danger" id="reset-btn" type="button">ล้างข้อมูลทุกบริษัทและกลับเป็นข้อมูลตัวอย่าง</button></div>
+</section>
+
+<!-- บันทึก -->
+<section class="panel" id="tab-records" hidden>
+  <div><h2>บันทึกการลา ขาดงาน และมาสาย</h2><p class="hint">ติ๊กเลือกพนักงานได้หลายคน แล้วบันทึกครั้งเดียว</p></div>
+  <div class="picker" id="rec-picker"></div>
+  <form id="rec-form" class="grid">
+    <label class="f">ประเภท<select id="r-type"></select></label>
+    <label class="f">วันที่<input id="r-date" type="date" required></label>
+    <label class="f"><span id="r-amt-label">จำนวนวัน</span><input id="r-amt" type="number" min="0.5" step="0.5" value="1" required></label>
+    <label class="f">หมายเหตุ<input id="r-note"></label>
+    <div class="row" style="grid-column:1/-1"><button class="btn primary" type="submit">บันทึก</button><span id="r-msg"></span></div>
+  </form>
+  <h3>ยอดคงเหลือปีนี้</h3>
+  <div class="tbl"><table id="quota-table"></table></div>
+  <div class="row"><h3 style="flex:1">รายการที่บันทึก</h3><label class="f" style="width:180px">เดือน<input id="r-month" type="month"></label></div>
+  <div class="tbl"><table id="rec-table"></table></div>
+</section>
+
+<!-- เงินเดือน -->
+<section class="panel" id="tab-payroll" hidden>
+  <div class="row"><div style="flex:1 1 260px"><h2>คำนวณเงินเดือน</h2><p class="hint">ระบบดึงการขาด สาย และลาไม่รับค่าจ้างของเดือนนั้นมาหักให้ ช่องรายได้อื่นและภาษีกรอกเองได้</p></div>
+  <label class="f" style="width:180px">งวดเดือน<input id="p-month" type="month"></label></div>
+  <div class="tbl"><table id="pay-table"></table></div>
+  <p class="hint">สูตร: หักขาดงาน = เงินเดือน ÷ 30 × วัน · หักมาสาย = เงินเดือน ÷ 30 ÷ 8 ÷ 60 × นาที</p>
+  <div class="row"><button class="btn primary" id="to-slips" type="button">ไปหน้าพิมพ์สลิปของเดือนนี้</button></div>
+</section>
+
+<!-- สลิป -->
+<section class="panel" id="tab-slips" hidden>
+  <div class="no-print"><h2>สลิปเงินเดือน</h2><p class="hint">ติ๊กเลือกพนักงานที่ต้องการ แล้วกดพิมพ์ ระบบจะพิมพ์คนละครึ่งหน้า A4</p></div>
+  <div class="row no-print"><label class="f" style="width:180px">งวดเดือน<input id="sl-month" type="month"></label>
+    <button class="btn primary" id="print-btn" type="button">พิมพ์สลิป</button></div>
+  <p class="note-print no-print" id="print-note" hidden>ปุ่มพิมพ์ใช้ได้เมื่ออัปโหลดไฟล์นี้ขึ้นเว็บไซต์ของคุณ ในหน้าตัวอย่างนี้ดูหน้าตาสลิปได้อย่างเดียว</p>
+  <div class="picker no-print" id="slip-picker"></div>
+  <div class="slips" id="slips"></div>
+</section>
+
+</div></main>
+
+<script>
+const KEY='hr-payroll-v2';
+const TYPES={holiday:{t:'วันหยุดประเพณี',u:'วัน'},sick:{t:'ลาป่วย',u:'วัน'},personal:{t:'ลากิจ',u:'วัน'},vacation:{t:'ลาพักร้อน',u:'วัน'},unpaid:{t:'ลาไม่รับค่าจ้าง',u:'วัน'},absent:{t:'ขาดงาน',u:'วัน'},late:{t:'มาสาย',u:'นาที'}};
+const now=new Date(); const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const BASE=()=>({
+  settings:{company:'บริษัท ตัวอย่าง จำกัด',year:2026,holidayQuota:13,sickQuota:30,personalQuota:6,vacationQuota:6,ssoRate:5,ssoCap:15000},
+  employees:[
+    {id:'E001',name:'สมชาย ใจดี',dept:'ฝ่ายขาย',pos:'พนักงานขาย',salary:18000,fuel:2000,phone:500,bank:'กสิกรไทย 012-3-45678-9'},
+    {id:'E002',name:'สุดารัตน์ วงศ์ไทย',dept:'บัญชี',pos:'นักบัญชี',salary:25000,fuel:0,phone:500,bank:'กรุงเทพ 123-4-56789-0'},
+    {id:'E003',name:'ณัฐพล ศรีสุข',dept:'ขนส่ง',pos:'พนักงานขับรถ',salary:15000,fuel:3000,phone:300,bank:'ไทยพาณิชย์ 234-5-67890-1'},
+    {id:'E004',name:'พิมพ์ชนก แก้วมณี',dept:'บุคคล',pos:'เจ้าหน้าที่ HR',salary:22000,fuel:0,phone:500,bank:'กสิกรไทย 345-6-78901-2'},
+    {id:'E005',name:'อนุชา ทองดี',dept:'ฝ่ายขาย',pos:'หัวหน้าฝ่ายขาย',salary:35000,fuel:3000,phone:1000,bank:'กรุงไทย 456-7-89012-3'},
+    {id:'E006',name:'กัญญา มีสุข',dept:'ธุรการ',pos:'ธุรการ',salary:14000,fuel:0,phone:0,bank:'ออมสิน 567-8-90123-4'},
+    {id:'E007',name:'วีระ บุญมา',dept:'คลังสินค้า',pos:'พนักงานคลังสินค้า',salary:13500,fuel:0,phone:0,bank:'กรุงไทย 678-9-01234-5'},
+    {id:'E008',name:'ปิยะนุช สายทอง',dept:'การตลาด',pos:'เจ้าหน้าที่การตลาด',salary:23000,fuel:1500,phone:500,bank:'ไทยพาณิชย์ 789-0-12345-6'},
+    {id:'E009',name:'ธนากร พึ่งบุญ',dept:'ไอที',pos:'เจ้าหน้าที่ไอที',salary:28000,fuel:0,phone:700,bank:'กรุงเทพ 890-1-23456-7'}],
+  holidays:[{date:'2026-01-01',name:'วันขึ้นปีใหม่'},{date:'2026-04-13',name:'วันสงกรานต์'},{date:'2026-04-14',name:'วันสงกรานต์'},{date:'2026-04-15',name:'วันสงกรานต์'},{date:'2026-05-01',name:'วันแรงงานแห่งชาติ'}],
+  records:[
+    {id:1,emp:'E001',type:'holiday',date:'2026-07-28',amount:1,note:''},{id:2,emp:'E001',type:'holiday',date:'2026-08-12',amount:1,note:''},
+    {id:3,emp:'E001',type:'holiday',date:'2026-10-13',amount:1,note:''},{id:4,emp:'E005',type:'holiday',date:'2026-10-23',amount:1,note:''},
+    {id:5,emp:'E002',type:'sick',date:'2026-11-04',amount:1,note:'มีใบรับรองแพทย์'},{id:6,emp:'E003',type:'late',date:'2026-11-03',amount:25,note:'รถติด'},
+    {id:7,emp:'E003',type:'late',date:'2026-11-06',amount:10,note:''},{id:8,emp:'E007',type:'absent',date:'2026-11-05',amount:1,note:'ไม่แจ้งล่วงหน้า'},
+    {id:9,emp:'E006',type:'holiday',date:'2026-11-06',amount:1,note:''},{id:10,emp:'E005',type:'vacation',date:'2026-11-09',amount:2,note:''},
+    {id:11,emp:'E008',type:'unpaid',date:'2026-11-02',amount:1,note:''}],
+  extra:{'2026-11':{E005:{other:5000,tax:850},E009:{other:0,tax:300}}}
+});
+const STARTS={E001:'2022-03-01',E002:'2019-06-15',E003:'2023-08-01',E004:'2020-11-02',E005:'2017-01-09',E006:'2024-05-20',E007:'2026-02-16',E008:'2025-12-01',E009:'2021-09-13'};
+const newCompany=(id,name,b=BASE())=>({id,settings:{...b.settings,company:name},employees:[],holidays:b.holidays,records:[],extra:{}});
+const SAMPLE=()=>{const b=BASE();b.employees.forEach(e=>e.start=STARTS[e.id]);
+  const mk=(id,name,ids)=>({...newCompany(id,name,b),holidays:BASE().holidays,employees:b.employees.filter(e=>ids.includes(e.id)),records:b.records.filter(r=>ids.includes(r.emp)),
+    extra:{'2026-11':Object.fromEntries(Object.entries(b.extra['2026-11']).filter(([k])=>ids.includes(k)))}});
+  return {current:'c1',companies:[mk('c1','บริษัท สยามเทรดดิ้ง จำกัด',['E001','E002','E005','E008']),mk('c2','บริษัท รุ่งเรืองขนส่ง จำกัด',['E003','E004','E007']),mk('c3','บริษัท กรีนฟู้ด จำกัด',['E006','E009'])]}};
+let ROOT;try{ROOT=JSON.parse(localStorage.getItem(KEY))}catch(e){ROOT=null}
+if(!ROOT||!Array.isArray(ROOT.companies)||!ROOT.companies.length){let old=null;try{old=JSON.parse(localStorage.getItem('hr-payroll-v1'))}catch(e){}
+  ROOT=old&&old.employees?{current:'c1',companies:[{id:'c1',...old}]}:SAMPLE()}
+let S,st;
+function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0];ROOT.current=S.id;st=S.settings}
+useCompany(ROOT.current);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ROOT))}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const thDate=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+const thMonth=m=>new Date(m+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+const emp=id=>S.employees.find(e=>e.id===id);
+function flash(el,text,ok=true){el.className='msg '+(ok?'ok':'err');el.textContent=text;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';el.className=''},3500)}
+
+/* ---------- tabs ---------- */
+const tabs=['employees','holidays','records','payroll','slips'];
+let curTab='employees';
+function show(t){if(!tabs.includes(t))t='employees';curTab=t;tabs.forEach(x=>{$('tab-'+x).hidden=x!==t});
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  try{localStorage.setItem(KEY+'-tab',t)}catch(e){} render(t)}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+
+/* ---------- picker ---------- */
+const picks={rec:new Set(),slip:new Set()};
+function renderPicker(box,key){const set=picks[key];[...set].forEach(id=>{if(!emp(id))set.delete(id)});
+  box.innerHTML=`<div class="bar"><b>เลือกพนักงาน</b><span>${set.size} จาก ${S.employees.length} คน</span>
+  <button type="button" class="btn small" data-a="all">เลือกทั้งหมด</button><button type="button" class="btn small" data-a="none">ล้าง</button></div>
+  <div class="chips">${S.employees.map(e=>`<label class="chip"><input type="checkbox" value="${esc(e.id)}" ${set.has(e.id)?'checked':''}><span>${esc(e.name)}</span><small>${esc(e.id)}</small></label>`).join('')}</div>`;
+  box.querySelectorAll('input').forEach(i=>i.onchange=()=>{i.checked?set.add(i.value):set.delete(i.value);box.querySelector('.bar span').textContent=`${set.size} จาก ${S.employees.length} คน`;if(key==='slip')renderSlips()});
+  box.querySelector('[data-a=all]').onclick=()=>{S.employees.forEach(e=>set.add(e.id));renderPicker(box,key);if(key==='slip')renderSlips()};
+  box.querySelector('[data-a=none]').onclick=()=>{set.clear();renderPicker(box,key);if(key==='slip')renderSlips()}}
+
+/* ---------- employees ---------- */
+let editing=null;
+function tenure(s){if(!s)return '';const a=new Date(s+'T00:00:00'),n=new Date();let m=(n.getFullYear()-a.getFullYear())*12+n.getMonth()-a.getMonth();if(n.getDate()<a.getDate())m--;
+  if(m<0)return 'ยังไม่เริ่มงาน';const y=Math.floor(m/12),r=m%12;return (y?y+' ปี ':'')+r+' เดือน'}
+function renderEmployees(){
+  const uniq=k=>[...new Set(S.employees.map(e=>e[k]).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('');
+  $('dl-dept').innerHTML=uniq('dept');$('dl-pos').innerHTML=uniq('pos');
+  $('emp-table').innerHTML=`<thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก / ตำแหน่ง</th><th>วันเริ่มงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th>บัญชี</th><th></th></tr></thead><tbody>${
+  S.employees.length?'':`<tr><td colspan="9">ยังไม่มีพนักงานใน${esc(st.company)} เริ่มเพิ่มคนแรกจากฟอร์มด้านบน</td></tr>`}${
+  S.employees.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)} · ${esc(e.pos)}</td><td>${e.start?thDate(e.start)+` <span class="hint">(${tenure(e.start)})</span>`:'<span class="hint">ยังไม่ระบุ</span>'}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td><td>${esc(e.bank)}</td>
+  <td><button class="btn small" data-edit="${esc(e.id)}">แก้ไข</button> <button class="btn small danger" data-del="${esc(e.id)}">ลบ</button></td></tr>`).join('')}</tbody>`;
+  $('emp-table').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const e=emp(b.dataset.edit);editing=e.id;
+    ['id','name','dept','pos','start','salary','fuel','phone','bank'].forEach(k=>$('e-'+k).value=e[k]??'');$('e-id').disabled=true;$('e-save').textContent='บันทึกการแก้ไข';$('e-cancel').hidden=false;$('e-name').focus()});
+  $('emp-table').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อลบ';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
+    S.employees=S.employees.filter(e=>e.id!==b.dataset.del);save();renderCoBar();renderEmployees()});
+}
+function resetEmpForm(){editing=null;$('emp-form').reset();$('e-id').disabled=false;$('e-save').textContent='เพิ่มพนักงาน';$('e-cancel').hidden=true}
+$('e-cancel').onclick=resetEmpForm;
+$('emp-form').onsubmit=ev=>{ev.preventDefault();const id=$('e-id').value.trim();
+  if(!editing&&emp(id))return flash($('e-msg'),'รหัส '+id+' มีอยู่แล้ว ใช้รหัสอื่น',false);
+  const d={id,name:$('e-name').value.trim(),dept:$('e-dept').value.trim(),pos:$('e-pos').value.trim(),start:$('e-start').value,salary:+$('e-salary').value||0,fuel:+$('e-fuel').value||0,phone:+$('e-phone').value||0,bank:$('e-bank').value.trim()};
+  if(editing){Object.assign(emp(editing),d,{id:editing})}else S.employees.push(d);
+  save();flash($('e-msg'),editing?'บันทึกการแก้ไขแล้ว':'เพิ่ม '+d.name+' แล้ว');resetEmpForm();renderCoBar();renderEmployees()};
+
+/* ---------- holidays & settings ---------- */
+const sMap={co:'company',year:'year',hq:'holidayQuota',sick:'sickQuota',pers:'personalQuota',vac:'vacationQuota',sso:'ssoRate',cap:'ssoCap'};
+const fixedThisYear=()=>S.holidays.filter(h=>h.date.startsWith(String(st.year)));
+function renderHolidays(){Object.entries(sMap).forEach(([k,v])=>$('s-'+k).value=st[v]);
+  const f=fixedThisYear().sort((a,b)=>a.date.localeCompare(b.date));
+  $('hol-summary').textContent=`ปี ${+st.year+543}: โควตา ${st.holidayQuota} วัน · บริษัทกำหนดแล้ว ${f.length} วัน · พนักงานเลือกหยุดเองได้อีก ${Math.max(0,st.holidayQuota-f.length)} วัน`;
+  $('hol-table').innerHTML=`<thead><tr><th>วันที่</th><th>วัน</th><th>ชื่อวันหยุด</th><th></th></tr></thead><tbody>${f.map(h=>{const dw=new Date(h.date+'T00:00:00');const we=[0,6].includes(dw.getDay());
+   return `<tr><td>${thDate(h.date)}</td><td>${dw.toLocaleDateString('th-TH',{weekday:'long'})}${we?' <span class="pill t-late">ตรงวันหยุดสุดสัปดาห์ ต้องหยุดชดเชย</span>':''}</td><td>${esc(h.name)}</td><td><button class="btn small danger" data-d="${h.date}">ลบ</button></td></tr>`}).join('')||'<tr><td colspan="4">ยังไม่มีวันหยุดบังคับ</td></tr>'}</tbody>`;
+  $('hol-table').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{S.holidays=S.holidays.filter(h=>h.date!==b.dataset.d);save();renderHolidays()})}
+Object.entries(sMap).forEach(([k,v])=>$('s-'+k).onchange=e=>{st[v]=k==='co'?e.target.value:+e.target.value;save();$('co-name').textContent=st.company;renderCoBar();renderHolidays()});
+$('hol-form').onsubmit=ev=>{ev.preventDefault();const d=$('h-date').value;if(S.holidays.some(h=>h.date===d))return;
+  S.holidays.push({date:d,name:$('h-name').value.trim()});save();ev.target.reset();renderHolidays()};
+$('reset-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลที่กรอกจะหายทั้งหมด';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัทและกลับเป็นข้อมูลตัวอย่าง'},4000);return}
+  ROOT=SAMPLE();save();location.reload()};
+$('del-co-btn').onclick=e=>{const b=e.target;if(ROOT.companies.length<2){b.textContent='ต้องมีอย่างน้อย 1 บริษัท';setTimeout(()=>b.textContent='ลบบริษัทนี้',3000);return}
+  if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
+  b.classList.remove('armed');b.textContent='ลบบริษัทนี้';ROOT.companies=ROOT.companies.filter(c=>c.id!==S.id);switchCompany(ROOT.companies[0].id)};
+
+/* ---------- companies ---------- */
+function renderCoBar(){
+  $('co-bar').innerHTML=ROOT.companies.map(c=>`<button type="button" class="co${c.id===S.id?' on':''}" data-co="${c.id}" aria-pressed="${c.id===S.id}">${esc(c.settings.company)} <small>${c.employees.length} คน</small></button>`).join('')+
+    '<button type="button" class="co add" id="co-add-btn">+ เพิ่มบริษัท</button>';
+  $('co-bar').querySelectorAll('[data-co]').forEach(b=>b.onclick=()=>switchCompany(b.dataset.co));
+  $('co-add-btn').onclick=()=>{$('co-add').hidden=false;$('co-new').focus()}}
+function switchCompany(id){useCompany(id);save();picks.rec.clear();picks.slip.clear();S.employees.forEach(e=>picks.slip.add(e.id));
+  resetEmpForm();$('co-name').textContent=st.company;renderCoBar();render(curTab)}
+$('co-add-cancel').onclick=()=>{$('co-add').hidden=true;$('co-add').reset()};
+$('co-add').onsubmit=ev=>{ev.preventDefault();const name=$('co-new').value.trim();if(!name)return;
+  const c=newCompany('c'+Date.now(),name);c.settings.year=now.getFullYear();ROOT.companies.push(c);
+  $('co-add').hidden=true;$('co-add').reset();switchCompany(c.id);show('employees')};
+
+/* ---------- records ---------- */
+function used(id,type,year=st.year){return S.records.filter(r=>r.emp===id&&r.type===type&&r.date.startsWith(String(year))).reduce((a,r)=>a+r.amount,0)}
+function quotaOf(type){return {holiday:st.holidayQuota,sick:st.sickQuota,personal:st.personalQuota,vacation:st.vacationQuota}[type]}
+function usedTotal(id,type){return type==='holiday'?used(id,'holiday')+fixedThisYear().length:used(id,type)}
+$('r-type').innerHTML=Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join('');
+$('r-type').onchange=()=>{const late=$('r-type').value==='late';$('r-amt-label').textContent=late?'จำนวนนาทีที่สาย':'จำนวนวัน';$('r-amt').step=late?1:0.5;$('r-amt').min=late?1:0.5;$('r-amt').value=late?15:1};
+function renderRecords(){renderPicker($('rec-picker'),'rec');
+  const meter=(u,q)=>`${u} / ${q}<span class="meter"><i class="${u>q?'over':''}" style="width:${Math.min(100,u/q*100)}%"></i></span>`;
+  $('quota-table').innerHTML=`<thead><tr><th>พนักงาน</th><th>วันหยุดประเพณี (รวมวันบังคับ)</th><th>ลาป่วย</th><th>ลากิจ</th><th>ลาพักร้อน</th><th class="n">ขาด (วัน)</th><th class="n">สาย (นาที)</th></tr></thead><tbody>${
+   S.employees.map(e=>`<tr><td>${esc(e.name)}</td><td>${meter(usedTotal(e.id,'holiday'),st.holidayQuota)} <span class="hint">เหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')}</span></td><td>${meter(used(e.id,'sick'),st.sickQuota)}</td><td>${meter(used(e.id,'personal'),st.personalQuota)}</td><td>${meter(used(e.id,'vacation'),st.vacationQuota)}</td><td class="n">${used(e.id,'absent')}</td><td class="n">${used(e.id,'late')}</td></tr>`).join('')}</tbody>`;
+  const m=$('r-month').value; const rows=S.records.filter(r=>r.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
+  $('rec-table').innerHTML=`<thead><tr><th>วันที่</th><th>พนักงาน</th><th>ประเภท</th><th class="n">จำนวน</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>${
+   rows.map(r=>`<tr><td>${thDate(r.date)}</td><td>${esc(emp(r.emp)?.name||r.emp)}</td><td><span class="pill t-${r.type}">${TYPES[r.type].t}</span></td><td class="n">${r.amount} ${TYPES[r.type].u}</td><td>${esc(r.note)}</td><td><button class="btn small danger" data-r="${r.id}">ลบ</button></td></tr>`).join('')||`<tr><td colspan="6">ไม่มีรายการใน${thMonth(m)}</td></tr>`}</tbody>`;
+  $('rec-table').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.records=S.records.filter(r=>r.id!==+b.dataset.r);save();renderRecords()})}
+$('r-month').onchange=renderRecords;
+$('rec-form').onsubmit=ev=>{ev.preventDefault();const ids=[...picks.rec];const msg=$('r-msg');
+  if(!ids.length)return flash(msg,'ติ๊กเลือกพนักงานอย่างน้อย 1 คนก่อนบันทึก',false);
+  const type=$('r-type').value,date=$('r-date').value,amount=+$('r-amt').value;
+  if(type==='holiday'){const dw=new Date(date+'T00:00:00').getDay();if(dw===0||dw===6)return flash(msg,'วันที่เลือกเป็นวันเสาร์หรืออาทิตย์อยู่แล้ว ไม่ต้องใช้โควตา',false);
+    if(S.holidays.some(h=>h.date===date))return flash(msg,'วันนี้เป็นวันหยุดบังคับของบริษัทอยู่แล้ว',false)}
+  const q=quotaOf(type);if(q!=null){const over=ids.filter(id=>usedTotal(id,type)+amount>q).map(id=>emp(id).name);
+    if(over.length)return flash(msg,`โควตา${TYPES[type].t}ไม่พอ: ${over.join(', ')}`,false)}
+  let nid=Math.max(0,...S.records.map(r=>r.id))+1;ids.forEach(id=>S.records.push({id:nid++,emp:id,type,date,amount,note:$('r-note').value.trim()}));
+  save();flash(msg,`บันทึก${TYPES[type].t}ให้ ${ids.length} คนแล้ว`);$('r-month').value=date.slice(0,7);$('r-note').value='';renderRecords()};
+
+/* ---------- payroll ---------- */
+function calc(e,m){const x=(S.extra[m]||{})[e.id]||{other:0,tax:0};
+  const sum=t=>S.records.filter(r=>r.emp===e.id&&r.type===t&&r.date.startsWith(m)).reduce((a,r)=>a+r.amount,0);
+  const daily=e.salary/30,absentD=sum('absent'),unpaidD=sum('unpaid'),lateM=sum('late');
+  const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,sso=Math.min(e.salary,st.ssoCap)*st.ssoRate/100;
+  const income=e.salary+e.fuel+e.phone+(+x.other||0),deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0);
+  return {x,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
+function renderPayroll(){const m=$('p-month').value;let T={inc:0,ded:0,net:0};
+  $('pay-table').innerHTML=`<thead><tr><th>พนักงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th class="n">รายได้อื่น/OT</th><th class="n">หักขาด+ลาไม่รับค่าจ้าง</th><th class="n">หักมาสาย</th><th class="n">ประกันสังคม</th><th class="n">ภาษี ณ ที่จ่าย</th><th class="n">รับสุทธิ</th></tr></thead><tbody>${
+   S.employees.map(e=>{const c=calc(e,m);T.inc+=c.income;T.ded+=c.deduct;T.net+=c.net;
+    return `<tr><td>${esc(e.name)}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td>
+    <td class="n"><input type="number" min="0" data-k="other" data-e="${esc(e.id)}" value="${+c.x.other||0}" aria-label="รายได้อื่นของ ${esc(e.name)}"></td>
+    <td class="n neg">${c.dAbsent+c.dUnpaid?'-'+money(c.dAbsent+c.dUnpaid):'–'}</td><td class="n neg">${c.dLate?'-'+money(c.dLate):'–'}</td><td class="n neg">-${money(c.sso)}</td>
+    <td class="n"><input type="number" min="0" data-k="tax" data-e="${esc(e.id)}" value="${+c.x.tax||0}" aria-label="ภาษีของ ${esc(e.name)}"></td><td class="n net">${money(c.net)}</td></tr>`}).join('')}</tbody>
+   <tfoot><tr><td>รวม ${S.employees.length} คน</td><td colspan="7" class="n">รายได้รวม ${money(T.inc)} · รายการหักรวม ${money(T.ded)}</td><td></td><td class="n net">${money(T.net)}</td></tr></tfoot>`;
+  $('pay-table').querySelectorAll('input').forEach(i=>i.onchange=()=>{S.extra[m]=S.extra[m]||{};const o=S.extra[m][i.dataset.e]=S.extra[m][i.dataset.e]||{other:0,tax:0};o[i.dataset.k]=+i.value||0;save();renderPayroll()})}
+$('p-month').onchange=renderPayroll;
+$('to-slips').onclick=()=>{$('sl-month').value=$('p-month').value;S.employees.forEach(e=>picks.slip.add(e.id));show('slips')};
+
+/* ---------- slips ---------- */
+function renderSlips(){const m=$('sl-month').value;const list=S.employees.filter(e=>picks.slip.has(e.id));
+  const li=(a,b,neg)=>`<div class="li"><span>${a}</span><em>${neg&&b?'-':''}${money(b)}</em></div>`;
+  $('slips').innerHTML=list.map(e=>{const c=calc(e,m);
+   return `<article class="slip"><div class="hd"><div><b>${esc(st.company)}</b>ใบแจ้งเงินเดือน (Pay Slip)</div><div class="r">งวด <b style="display:inline;font-size:15px">${thMonth(m)}</b><br>จ่ายวันที่ ${thDate(m+'-'+String(new Date(+m.slice(0,4),+m.slice(5),0).getDate()))}</div></div>
+   <div class="who"><div><span>รหัส</span> ${esc(e.id)}</div><div><span>ชื่อ</span> ${esc(e.name)}</div><div><span>แผนก</span> ${esc(e.dept)}</div><div><span>ตำแหน่ง</span> ${esc(e.pos)}</div><div><span>วันเริ่มงาน</span> ${e.start?thDate(e.start):'–'}</div><div style="grid-column:1/-1"><span>โอนเข้าบัญชี</span> ${esc(e.bank)}</div></div>
+   <div class="cols"><div><h4>รายได้</h4>${li('เงินเดือน',e.salary)}${li('ค่าน้ำมัน',e.fuel)}${li('ค่าโทรศัพท์',e.phone)}${li('รายได้อื่น / OT',+c.x.other||0)}<div class="tot"><span>รวมรายได้</span><span>${money(c.income)}</span></div></div>
+   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${li(`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
+   <div class="netbox"><span>เงินได้สุทธิ</span><em>${money(c.net)} บาท</em></div>
+   <div class="att">สรุปปี ${+st.year+543}: วันหยุดประเพณีคงเหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')} วัน · ลาป่วย ${used(e.id,'sick')}/${st.sickQuota} · ลากิจ ${used(e.id,'personal')}/${st.personalQuota} · ลาพักร้อน ${used(e.id,'vacation')}/${st.vacationQuota}</div>
+   <div class="sign"><div>ผู้จ่ายเงิน</div><div>ผู้รับเงิน</div></div></article>`}).join('')||'<p class="hint">ติ๊กเลือกพนักงานเพื่อดูสลิป</p>'}
+$('sl-month').onchange=renderSlips;
+const framed=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(framed){$('print-btn').hidden=true;$('print-note').hidden=false}
+$('print-btn').onclick=()=>window.print();
+
+/* ---------- init ---------- */
+function render(t){({employees:renderEmployees,holidays:renderHolidays,records:renderRecords,payroll:renderPayroll,slips:()=>{renderPicker($('slip-picker'),'slip');renderSlips()}})[t]()}
+$('co-name').textContent=st.company;renderCoBar();
+$('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+$('r-date').value=now.toISOString().slice(0,10);
+['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
+S.employees.forEach(e=>picks.slip.add(e.id));
+let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'payroll');
+</script>
+
+</body>
+</html>
