@@ -51,6 +51,8 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .forgot summary{cursor:pointer;color:var(--muted);font-size:.85rem}
 .forgot p{margin:8px 0}
 .whobar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;max-width:65ch}
+.steps b{display:block}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -155,7 +157,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
     <div class="brand">
       <div>
         <h1 id="co-name">บริษัท</h1>
-        <div class="sub">ระบบ HR · วันหยุด การลา และเงินเดือน <span class="sample">ข้อมูลตัวอย่าง</span></div>
+        <div class="sub">ระบบ HR · วันหยุด การลา และเงินเดือน</div>
       </div>
       <div class="whobar"><span class="sub" id="today"></span><span class="sub">ผู้ใช้ <b id="me"></b></span><button class="btn small" type="button" id="logout">ออกจากระบบ</button></div>
     </div>
@@ -180,6 +182,17 @@ td input{width:96px;padding:4px 6px;text-align:right}
 </header>
 
 <main><div class="wrap">
+
+<!-- เริ่มต้น -->
+<section class="panel" id="tab-welcome" hidden>
+  <div><h2>เริ่มต้นใช้งาน</h2><p class="hint">ระบบยังไม่มีข้อมูล ทำตามขั้นตอนนี้เพื่อเริ่มใช้งาน</p></div>
+  <ol class="steps">
+    <li><b>เพิ่มบริษัท</b> พิมพ์ชื่อบริษัทในช่องด้านบน แล้วกด เพิ่มบริษัท ถ้ามีหลายบริษัทให้เพิ่มทีละแห่ง</li>
+    <li><b>ตั้งวันหยุดและโควตา</b> กำหนดวันหยุดบังคับ โควตาวันลา และอัตราประกันสังคมของบริษัทนั้น</li>
+    <li><b>เพิ่มพนักงาน</b> กรอกข้อมูลพนักงานแต่ละคน หลังจากนั้นหน้าอื่นจะใช้ติ๊กเลือกได้เลย</li>
+  </ol>
+  <div class="row"><button class="btn" type="button" id="go-users">จัดการผู้ใช้ HR หรือกู้คืนจากไฟล์สำรอง</button></div>
+</section>
 
 <!-- พนักงาน -->
 <section class="panel" id="tab-employees" hidden>
@@ -226,7 +239,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
   </form>
   <div id="hol-summary" class="msg ok"></div>
   <div class="tbl"><table id="hol-table"></table></div>
-  <div class="row"><button class="btn danger" id="del-co-btn" type="button">ลบบริษัทนี้</button><button class="btn danger" id="reset-btn" type="button">ล้างข้อมูลทุกบริษัทและกลับเป็นข้อมูลตัวอย่าง</button></div>
+  <div class="row"><button class="btn danger" id="del-co-btn" type="button">ลบบริษัทนี้</button><button class="btn danger" id="reset-btn" type="button">ล้างข้อมูลทุกบริษัท</button></div>
 </section>
 
 <!-- บันทึก -->
@@ -299,34 +312,9 @@ td input{width:96px;padding:4px 6px;text-align:right}
 const KEY='hr-payroll-v2';
 const TYPES={holiday:{t:'วันหยุดประเพณี',u:'วัน'},sick:{t:'ลาป่วย',u:'วัน'},personal:{t:'ลากิจ',u:'วัน'},vacation:{t:'ลาพักร้อน',u:'วัน'},unpaid:{t:'ลาไม่รับค่าจ้าง',u:'วัน'},absent:{t:'ขาดงาน',u:'วัน'},late:{t:'มาสาย',u:'นาที'}};
 const now=new Date(); const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-const BASE=()=>({
-  settings:{company:'บริษัท ตัวอย่าง จำกัด',year:2026,holidayQuota:13,sickQuota:30,personalQuota:6,vacationQuota:6,ssoRate:5,ssoCap:15000},
-  employees:[
-    {id:'E001',name:'สมชาย ใจดี',dept:'ฝ่ายขาย',pos:'พนักงานขาย',salary:18000,fuel:2000,phone:500,bank:'กสิกรไทย 012-3-45678-9'},
-    {id:'E002',name:'สุดารัตน์ วงศ์ไทย',dept:'บัญชี',pos:'นักบัญชี',salary:25000,fuel:0,phone:500,bank:'กรุงเทพ 123-4-56789-0'},
-    {id:'E003',name:'ณัฐพล ศรีสุข',dept:'ขนส่ง',pos:'พนักงานขับรถ',salary:15000,fuel:3000,phone:300,bank:'ไทยพาณิชย์ 234-5-67890-1'},
-    {id:'E004',name:'พิมพ์ชนก แก้วมณี',dept:'บุคคล',pos:'เจ้าหน้าที่ HR',salary:22000,fuel:0,phone:500,bank:'กสิกรไทย 345-6-78901-2'},
-    {id:'E005',name:'อนุชา ทองดี',dept:'ฝ่ายขาย',pos:'หัวหน้าฝ่ายขาย',salary:35000,fuel:3000,phone:1000,bank:'กรุงไทย 456-7-89012-3'},
-    {id:'E006',name:'กัญญา มีสุข',dept:'ธุรการ',pos:'ธุรการ',salary:14000,fuel:0,phone:0,bank:'ออมสิน 567-8-90123-4'},
-    {id:'E007',name:'วีระ บุญมา',dept:'คลังสินค้า',pos:'พนักงานคลังสินค้า',salary:13500,fuel:0,phone:0,bank:'กรุงไทย 678-9-01234-5'},
-    {id:'E008',name:'ปิยะนุช สายทอง',dept:'การตลาด',pos:'เจ้าหน้าที่การตลาด',salary:23000,fuel:1500,phone:500,bank:'ไทยพาณิชย์ 789-0-12345-6'},
-    {id:'E009',name:'ธนากร พึ่งบุญ',dept:'ไอที',pos:'เจ้าหน้าที่ไอที',salary:28000,fuel:0,phone:700,bank:'กรุงเทพ 890-1-23456-7'}],
-  holidays:[{date:'2026-01-01',name:'วันขึ้นปีใหม่'},{date:'2026-04-13',name:'วันสงกรานต์'},{date:'2026-04-14',name:'วันสงกรานต์'},{date:'2026-04-15',name:'วันสงกรานต์'},{date:'2026-05-01',name:'วันแรงงานแห่งชาติ'}],
-  records:[
-    {id:1,emp:'E001',type:'holiday',date:'2026-07-28',amount:1,note:''},{id:2,emp:'E001',type:'holiday',date:'2026-08-12',amount:1,note:''},
-    {id:3,emp:'E001',type:'holiday',date:'2026-10-13',amount:1,note:''},{id:4,emp:'E005',type:'holiday',date:'2026-10-23',amount:1,note:''},
-    {id:5,emp:'E002',type:'sick',date:'2026-11-04',amount:1,note:'มีใบรับรองแพทย์'},{id:6,emp:'E003',type:'late',date:'2026-11-03',amount:25,note:'รถติด'},
-    {id:7,emp:'E003',type:'late',date:'2026-11-06',amount:10,note:''},{id:8,emp:'E007',type:'absent',date:'2026-11-05',amount:1,note:'ไม่แจ้งล่วงหน้า'},
-    {id:9,emp:'E006',type:'holiday',date:'2026-11-06',amount:1,note:''},{id:10,emp:'E005',type:'vacation',date:'2026-11-09',amount:2,note:''},
-    {id:11,emp:'E008',type:'unpaid',date:'2026-11-02',amount:1,note:''}],
-  extra:{'2026-11':{E005:{other:5000,tax:850},E009:{other:0,tax:300}}}
-});
-const STARTS={E001:'2022-03-01',E002:'2019-06-15',E003:'2023-08-01',E004:'2020-11-02',E005:'2017-01-09',E006:'2024-05-20',E007:'2026-02-16',E008:'2025-12-01',E009:'2021-09-13'};
-const newCompany=(id,name,b=BASE())=>({id,settings:{...b.settings,company:name},employees:[],holidays:b.holidays,records:[],extra:{}});
-const SAMPLE=()=>{const b=BASE();b.employees.forEach(e=>e.start=STARTS[e.id]);
-  const mk=(id,name,ids)=>({...newCompany(id,name,b),holidays:BASE().holidays,employees:b.employees.filter(e=>ids.includes(e.id)),records:b.records.filter(r=>ids.includes(r.emp)),
-    extra:{'2026-11':Object.fromEntries(Object.entries(b.extra['2026-11']).filter(([k])=>ids.includes(k)))}});
-  return {current:'c1',companies:[mk('c1','บริษัท สยามเทรดดิ้ง จำกัด',['E001','E002','E005','E008']),mk('c2','บริษัท รุ่งเรืองขนส่ง จำกัด',['E003','E004','E007']),mk('c3','บริษัท กรีนฟู้ด จำกัด',['E006','E009'])]}};
+const DEFAULT_SETTINGS=()=>({company:'',year:now.getFullYear(),holidayQuota:13,sickQuota:30,personalQuota:6,vacationQuota:6,ssoRate:5,ssoCap:15000});
+const newCompany=(id,name)=>({id,settings:{...DEFAULT_SETTINGS(),company:name},employees:[],holidays:[],records:[],extra:{}});
+const EMPTY=()=>({current:null,companies:[]});
 /* ---------- encrypted storage + login ---------- */
 const AUTH_KEY='hr-auth-v1',VAULT_KEY='hr-vault-v1',ITER=310000;
 const te=new TextEncoder(),td=new TextDecoder();
@@ -341,8 +329,7 @@ async function wrapFor(u,pw,raw,role){const salt=rnd(16),iv=rnd(12);const w=awai
   return {u,role,salt:b64(salt),iv:b64(iv),wrapped:b64(w)}}
 let ROOT=null,DK=null,DKraw=null,ME=null;
 const getAuth=()=>{const a=readJSON(AUTH_KEY);return a&&Array.isArray(a.users)&&a.users.length?a:null};
-const validRoot=r=>r&&Array.isArray(r.companies)&&r.companies.length;
-function legacyData(){const v2=readJSON(KEY);if(validRoot(v2))return v2;const v1=readJSON('hr-payroll-v1');return v1&&v1.employees?{current:'c1',companies:[{id:'c1',...v1}]}:null}
+const validRoot=r=>r&&Array.isArray(r.companies);
 async function persist(){if(!DK||!ROOT)return;const iv=rnd(12);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},DK,te.encode(JSON.stringify(ROOT)));
   if(!writeJSON(VAULT_KEY,{iv:b64(iv),ct:b64(ct)}))console.warn('บันทึกข้อมูลไม่สำเร็จ')}
 let saveChain=Promise.resolve();
@@ -353,12 +340,12 @@ async function unlock(u,pw){const A=getAuth();const rec=A&&A.users.find(x=>x.u.t
   let raw;try{raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(rec.iv)},await kek(pw,unb64(rec.salt)),unb64(rec.wrapped))}catch(e){throw new Error('bad')}
   await setDK(raw);ME=rec;const V=readJSON(VAULT_KEY);
   if(V){try{ROOT=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(V.iv)},DK,unb64(V.ct))))}catch(e){throw new Error('vault')}}
-  if(!validRoot(ROOT)){ROOT=SAMPLE();await persist()}}
+  if(!validRoot(ROOT)){ROOT=EMPTY();await persist()}}
 async function setupFirst(u,pw){const raw=rnd(32);const rec=await wrapFor(u.trim(),pw,raw,'admin');
-  writeJSON(AUTH_KEY,{v:1,users:[rec]});await setDK(raw);ME=rec;ROOT=legacyData()||SAMPLE();await persist();
+  writeJSON(AUTH_KEY,{v:1,users:[rec]});await setDK(raw);ME=rec;ROOT=EMPTY();await persist();
   try{localStorage.removeItem(KEY);localStorage.removeItem('hr-payroll-v1')}catch(e){}}
 let S,st;
-function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0];ROOT.current=S.id;st=S.settings}
+function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0]||null;ROOT.current=S?S.id:null;st=S?S.settings:null}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -370,7 +357,7 @@ function flash(el,text,ok=true){el.className='msg '+(ok?'ok':'err');el.textConte
 /* ---------- tabs ---------- */
 const tabs=['employees','holidays','records','payroll','slips','users'];
 let curTab='employees';
-function show(t){if(!tabs.includes(t))t='employees';curTab=t;tabs.forEach(x=>{$('tab-'+x).hidden=x!==t});
+function show(t){if(!tabs.includes(t))t='employees';if(!S&&t!=='users')return showWelcome();$('tab-welcome').hidden=true;document.querySelector('nav.tabs').hidden=false;curTab=t;tabs.forEach(x=>{$('tab-'+x).hidden=x!==t});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
   try{localStorage.setItem(KEY+'-tab',t)}catch(e){} render(t)}
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
@@ -421,11 +408,10 @@ function renderHolidays(){Object.entries(sMap).forEach(([k,v])=>$('s-'+k).value=
 Object.entries(sMap).forEach(([k,v])=>$('s-'+k).onchange=e=>{st[v]=k==='co'?e.target.value:+e.target.value;save();$('co-name').textContent=st.company;renderCoBar();renderHolidays()});
 $('hol-form').onsubmit=ev=>{ev.preventDefault();const d=$('h-date').value;if(S.holidays.some(h=>h.date===d))return;
   S.holidays.push({date:d,name:$('h-name').value.trim()});save();ev.target.reset();renderHolidays()};
-$('reset-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลที่กรอกจะหายทั้งหมด';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัทและกลับเป็นข้อมูลตัวอย่าง'},4000);return}
-  ROOT=SAMPLE();save();saveChain.then(()=>location.reload())};
-$('del-co-btn').onclick=e=>{const b=e.target;if(ROOT.companies.length<2){b.textContent='ต้องมีอย่างน้อย 1 บริษัท';setTimeout(()=>b.textContent='ลบบริษัทนี้',3000);return}
-  if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
-  b.classList.remove('armed');b.textContent='ลบบริษัทนี้';ROOT.companies=ROOT.companies.filter(c=>c.id!==S.id);switchCompany(ROOT.companies[0].id)};
+$('reset-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทจะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท'},4000);return}
+  ROOT=EMPTY();save();saveChain.then(()=>location.reload())};
+$('del-co-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
+  b.classList.remove('armed');b.textContent='ลบบริษัทนี้';ROOT.companies=ROOT.companies.filter(c=>c.id!==S.id);if(ROOT.companies.length)switchCompany(ROOT.companies[0].id);else{save();showWelcome()}};
 
 /* ---------- companies ---------- */
 function renderCoBar(){
@@ -433,9 +419,11 @@ function renderCoBar(){
     '<button type="button" class="co add" id="co-add-btn">+ เพิ่มบริษัท</button>';
   $('co-bar').querySelectorAll('[data-co]').forEach(b=>b.onclick=()=>switchCompany(b.dataset.co));
   $('co-add-btn').onclick=()=>{$('co-add').hidden=false;$('co-new').focus()}}
+function showWelcome(){S=null;st=null;tabs.forEach(x=>$('tab-'+x).hidden=true);$('tab-welcome').hidden=false;document.querySelector('nav.tabs').hidden=true;
+  $('co-name').textContent='ยังไม่มีบริษัทในระบบ';renderCoBar();$('co-add').hidden=false;$('co-new').focus()}
 function switchCompany(id){useCompany(id);save();picks.rec.clear();picks.slip.clear();S.employees.forEach(e=>picks.slip.add(e.id));
   resetEmpForm();$('co-name').textContent=st.company;renderCoBar();render(curTab)}
-$('co-add-cancel').onclick=()=>{$('co-add').hidden=true;$('co-add').reset()};
+$('co-add-cancel').onclick=()=>{$('co-add').reset();if(S)$('co-add').hidden=true};
 $('co-add').onsubmit=ev=>{ev.preventDefault();const name=$('co-new').value.trim();if(!name)return;
   const c=newCompany('c'+Date.now(),name);c.settings.year=now.getFullYear();ROOT.companies.push(c);
   $('co-add').hidden=true;$('co-add').reset();switchCompany(c.id);show('employees')};
@@ -529,6 +517,7 @@ const IDLE_MS=15*60*1000;
 function logout(){saveChain.then(()=>location.reload())}
 function bumpIdle(){clearTimeout(idleT);idleT=setTimeout(logout,IDLE_MS)}
 $('logout').onclick=logout;
+$('go-users').onclick=()=>show('users');
 const firstRun=!getAuth();
 if(firstRun){$('auth-title').textContent='ตั้งค่าบัญชี HR ครั้งแรก';
   $('auth-sub').textContent='สร้างบัญชีผู้ดูแลระบบสำหรับเครื่องนี้ ข้อมูลทั้งหมดจะถูกเข้ารหัสด้วยรหัสผ่านนี้ ถ้าลืมรหัสผ่านจะกู้คืนข้อมูลไม่ได้';
@@ -551,13 +540,12 @@ $('auth-form').onsubmit=async ev=>{ev.preventDefault();const msg=$('a-msg'),go=$
 /* ---------- init ---------- */
 function render(t){({employees:renderEmployees,holidays:renderHolidays,records:renderRecords,payroll:renderPayroll,slips:()=>{renderPicker($('slip-picker'),'slip');renderSlips()},users:renderUsers})[t]()}
 function startApp(){useCompany(ROOT.current);$('auth').hidden=true;$('app').hidden=false;$('me').textContent=ME.u;
-  $('co-name').textContent=st.company;renderCoBar();
   $('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   $('r-date').value=now.toISOString().slice(0,10);
   ['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
-  S.employees.forEach(e=>picks.slip.add(e.id));
   ['pointerdown','keydown','scroll'].forEach(t=>addEventListener(t,bumpIdle,{passive:true}));bumpIdle();
-  let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'payroll')}
+  if(!S)return showWelcome();$('co-name').textContent=st.company;renderCoBar();S.employees.forEach(e=>picks.slip.add(e.id));
+  let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'employees')}
 $('a-user').focus();
 </script>
 
