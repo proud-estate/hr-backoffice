@@ -204,7 +204,8 @@ td input{width:96px;padding:4px 6px;text-align:right}
     <label class="f">ตำแหน่ง<input id="e-pos" list="dl-pos" placeholder="พิมพ์หรือเลือกจากรายการ"></label>
     <label class="f">วันเริ่มงาน<input id="e-start" type="date"></label>
     <datalist id="dl-dept"></datalist><datalist id="dl-pos"></datalist>
-    <label class="f">เงินเดือน (บาท)<input id="e-salary" type="number" min="0" step="1" required></label>
+    <label class="f">รอบจ่ายเงินเดือน<select id="e-cycle"><option value="monthly">รายเดือน (จ่ายสิ้นเดือน)</option><option value="semi">ทุก 15 วัน (แบ่งจ่าย 2 งวด)</option></select></label>
+    <label class="f">เงินเดือนเต็มเดือน (บาท)<input id="e-salary" type="number" min="0" step="1" required></label>
     <label class="f">ค่าน้ำมัน / เดือน<input id="e-fuel" type="number" min="0" step="1" value="0"></label>
     <label class="f">ค่าโทรศัพท์ / เดือน<input id="e-phone" type="number" min="0" step="1" value="0"></label>
     <label class="f">บัญชีธนาคาร<input id="e-bank" placeholder="ธนาคาร เลขบัญชี"></label>
@@ -262,16 +263,17 @@ td input{width:96px;padding:4px 6px;text-align:right}
 <!-- เงินเดือน -->
 <section class="panel" id="tab-payroll" hidden>
   <div class="row"><div style="flex:1 1 260px"><h2>คำนวณเงินเดือน</h2><p class="hint">ระบบดึงการขาด สาย และลาไม่รับค่าจ้างของเดือนนั้นมาหักให้ ช่องรายได้อื่นและภาษีกรอกเองได้</p></div>
-  <label class="f" style="width:180px">งวดเดือน<input id="p-month" type="month"></label></div>
+  <div class="row"><label class="f" style="width:170px">เดือน<input id="p-month" type="month"></label><label class="f" style="width:230px">งวด<select id="p-round"><option value="2">สิ้นเดือน (ทุกคน)</option><option value="1">วันที่ 15 (เฉพาะพนักงานรับทุก 15 วัน)</option></select></label></div></div>
   <div class="tbl"><table id="pay-table"></table></div>
   <p class="hint">สูตร: หักขาดงาน = เงินเดือน ÷ 30 × วัน · หักมาสาย = เงินเดือน ÷ 30 ÷ 8 ÷ 60 × นาที</p>
+  <p class="hint">พนักงานรับทุก 15 วัน: แต่ละงวดได้ครึ่งหนึ่งของเงินเดือน ค่าน้ำมัน และค่าโทรศัพท์ หักขาด ลา และสาย ตามวันที่ที่เกิดในงวดนั้น (1–15 หรือ 16–สิ้นเดือน) ส่วนประกันสังคมหักครั้งเดียวในงวดสิ้นเดือน</p>
   <div class="row"><button class="btn primary" id="to-slips" type="button">ไปหน้าพิมพ์สลิปของเดือนนี้</button></div>
 </section>
 
 <!-- สลิป -->
 <section class="panel" id="tab-slips" hidden>
   <div class="no-print"><h2>สลิปเงินเดือน</h2><p class="hint">ติ๊กเลือกพนักงานที่ต้องการ แล้วกดพิมพ์ ระบบจะพิมพ์คนละครึ่งหน้า A4</p></div>
-  <div class="row no-print"><label class="f" style="width:180px">งวดเดือน<input id="sl-month" type="month"></label>
+  <div class="row no-print"><label class="f" style="width:170px">เดือน<input id="sl-month" type="month"></label><label class="f" style="width:230px">งวด<select id="sl-round"><option value="2">สิ้นเดือน (ทุกคน)</option><option value="1">วันที่ 15 (เฉพาะพนักงานรับทุก 15 วัน)</option></select></label>
     <button class="btn primary" id="print-btn" type="button">พิมพ์สลิป</button></div>
   <p class="note-print no-print" id="print-note" hidden>ปุ่มพิมพ์ใช้ได้เมื่ออัปโหลดไฟล์นี้ขึ้นเว็บไซต์ของคุณ ในหน้าตัวอย่างนี้ดูหน้าตาสลิปได้อย่างเดียว</p>
   <div class="picker no-print" id="slip-picker"></div>
@@ -379,20 +381,21 @@ function tenure(s){if(!s)return '';const a=new Date(s+'T00:00:00'),n=new Date();
 function renderEmployees(){
   const uniq=k=>[...new Set(S.employees.map(e=>e[k]).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('');
   $('dl-dept').innerHTML=uniq('dept');$('dl-pos').innerHTML=uniq('pos');
-  $('emp-table').innerHTML=`<thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก / ตำแหน่ง</th><th>วันเริ่มงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th>บัญชี</th><th></th></tr></thead><tbody>${
-  S.employees.length?'':`<tr><td colspan="9">ยังไม่มีพนักงานใน${esc(st.company)} เริ่มเพิ่มคนแรกจากฟอร์มด้านบน</td></tr>`}${
-  S.employees.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)} · ${esc(e.pos)}</td><td>${e.start?thDate(e.start)+` <span class="hint">(${tenure(e.start)})</span>`:'<span class="hint">ยังไม่ระบุ</span>'}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td><td>${esc(e.bank)}</td>
+  $('emp-table').innerHTML=`<thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก / ตำแหน่ง</th><th>วันเริ่มงาน</th><th>รอบจ่าย</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th>บัญชี</th><th></th></tr></thead><tbody>${
+  S.employees.length?'':`<tr><td colspan="10">ยังไม่มีพนักงานใน${esc(st.company)} เริ่มเพิ่มคนแรกจากฟอร์มด้านบน</td></tr>`}${
+  S.employees.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)} · ${esc(e.pos)}</td><td>${e.start?thDate(e.start)+` <span class="hint">(${tenure(e.start)})</span>`:'<span class="hint">ยังไม่ระบุ</span>'}</td><td>${cycleChip(e)}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td><td>${esc(e.bank)}</td>
   <td><button class="btn small" data-edit="${esc(e.id)}">แก้ไข</button> <button class="btn small danger" data-del="${esc(e.id)}">ลบ</button></td></tr>`).join('')}</tbody>`;
   $('emp-table').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const e=emp(b.dataset.edit);editing=e.id;
-    ['id','name','dept','pos','start','salary','fuel','phone','bank'].forEach(k=>$('e-'+k).value=e[k]??'');$('e-id').disabled=true;$('e-save').textContent='บันทึกการแก้ไข';$('e-cancel').hidden=false;$('e-name').focus()});
+    ['id','name','dept','pos','start','salary','fuel','phone','bank'].forEach(k=>$('e-'+k).value=e[k]??'');$('e-cycle').value=e.cycle||'monthly';$('e-id').disabled=true;$('e-save').textContent='บันทึกการแก้ไข';$('e-cancel').hidden=false;$('e-name').focus()});
   $('emp-table').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อลบ';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
     S.employees=S.employees.filter(e=>e.id!==b.dataset.del);save();renderCoBar();renderEmployees()});
 }
+const cycleChip=e=>e.cycle==='semi'?'<span class="pill t-late">ทุก 15 วัน</span>':'<span class="pill">รายเดือน</span>';
 function resetEmpForm(){editing=null;$('emp-form').reset();$('e-id').disabled=false;$('e-save').textContent='เพิ่มพนักงาน';$('e-cancel').hidden=true}
 $('e-cancel').onclick=resetEmpForm;
 $('emp-form').onsubmit=ev=>{ev.preventDefault();const id=$('e-id').value.trim();
   if(!editing&&emp(id))return flash($('e-msg'),'รหัส '+id+' มีอยู่แล้ว ใช้รหัสอื่น',false);
-  const d={id,name:$('e-name').value.trim(),dept:$('e-dept').value.trim(),pos:$('e-pos').value.trim(),start:$('e-start').value,salary:+$('e-salary').value||0,fuel:+$('e-fuel').value||0,phone:+$('e-phone').value||0,bank:$('e-bank').value.trim()};
+  const d={id,name:$('e-name').value.trim(),dept:$('e-dept').value.trim(),pos:$('e-pos').value.trim(),start:$('e-start').value,cycle:$('e-cycle').value,salary:+$('e-salary').value||0,fuel:+$('e-fuel').value||0,phone:+$('e-phone').value||0,bank:$('e-bank').value.trim()};
   if(editing){Object.assign(emp(editing),d,{id:editing})}else S.employees.push(d);
   save();flash($('e-msg'),editing?'บันทึกการแก้ไขแล้ว':'เพิ่ม '+d.name+' แล้ว');resetEmpForm();renderCoBar();renderEmployees()};
 
@@ -454,36 +457,41 @@ $('rec-form').onsubmit=ev=>{ev.preventDefault();const ids=[...picks.rec];const m
   save();flash(msg,`บันทึก${TYPES[type].t}ให้ ${ids.length} คนแล้ว`);$('r-month').value=date.slice(0,7);$('r-note').value='';renderRecords()};
 
 /* ---------- payroll ---------- */
-function calc(e,m){const x=(S.extra[m]||{})[e.id]||{other:0,tax:0};
-  const sum=t=>S.records.filter(r=>r.emp===e.id&&r.type===t&&r.date.startsWith(m)).reduce((a,r)=>a+r.amount,0);
+const lastDay=m=>new Date(+m.slice(0,4),+m.slice(5),0).getDate();
+const periodKey=(m,round)=>round===1?m+'#1':m;
+const roundList=round=>round===1?S.employees.filter(e=>e.cycle==='semi'):S.employees;
+function calc(e,m,round=2){const semi=e.cycle==='semi';const key=periodKey(m,round);const x=(S.extra[key]||{})[e.id]||{other:0,tax:0};
+  const d1=semi&&round===2?16:1,d2=semi&&round===1?15:31;
+  const sum=t=>S.records.filter(r=>{if(r.emp!==e.id||r.type!==t||!r.date.startsWith(m))return false;const d=+r.date.slice(8,10);return d>=d1&&d<=d2}).reduce((a,r)=>a+r.amount,0);
+  const f=semi?0.5:1,base=e.salary*f,fuel=e.fuel*f,phone=e.phone*f;
   const daily=e.salary/30,absentD=sum('absent'),unpaidD=sum('unpaid'),lateM=sum('late');
-  const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,sso=Math.min(e.salary,st.ssoCap)*st.ssoRate/100;
-  const income=e.salary+e.fuel+e.phone+(+x.other||0),deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0);
-  return {x,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
-function renderPayroll(){const m=$('p-month').value;let T={inc:0,ded:0,net:0};
+  const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,sso=round===2?Math.min(e.salary,st.ssoCap)*st.ssoRate/100:0;
+  const income=base+fuel+phone+(+x.other||0),deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0);
+  return {x,semi,d1,d2:Math.min(d2,lastDay(m)),base,fuel,phone,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
+function renderPayroll(){const m=$('p-month').value,round=+$('p-round').value,key=periodKey(m,round),list=roundList(round);let T={inc:0,ded:0,net:0};
   $('pay-table').innerHTML=`<thead><tr><th>พนักงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th class="n">รายได้อื่น/OT</th><th class="n">หักขาด+ลาไม่รับค่าจ้าง</th><th class="n">หักมาสาย</th><th class="n">ประกันสังคม</th><th class="n">ภาษี ณ ที่จ่าย</th><th class="n">รับสุทธิ</th></tr></thead><tbody>${
-   S.employees.map(e=>{const c=calc(e,m);T.inc+=c.income;T.ded+=c.deduct;T.net+=c.net;
-    return `<tr><td>${esc(e.name)}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td>
+   list.map(e=>{const c=calc(e,m,round);T.inc+=c.income;T.ded+=c.deduct;T.net+=c.net;
+    return `<tr><td>${esc(e.name)} ${c.semi?'<span class="pill t-late">'+c.d1+'–'+c.d2+'</span>':''}</td><td class="n">${money(c.base)}</td><td class="n">${money(c.fuel)}</td><td class="n">${money(c.phone)}</td>
     <td class="n"><input type="number" min="0" data-k="other" data-e="${esc(e.id)}" value="${+c.x.other||0}" aria-label="รายได้อื่นของ ${esc(e.name)}"></td>
-    <td class="n neg">${c.dAbsent+c.dUnpaid?'-'+money(c.dAbsent+c.dUnpaid):'–'}</td><td class="n neg">${c.dLate?'-'+money(c.dLate):'–'}</td><td class="n neg">-${money(c.sso)}</td>
-    <td class="n"><input type="number" min="0" data-k="tax" data-e="${esc(e.id)}" value="${+c.x.tax||0}" aria-label="ภาษีของ ${esc(e.name)}"></td><td class="n net">${money(c.net)}</td></tr>`}).join('')}</tbody>
-   <tfoot><tr><td>รวม ${S.employees.length} คน</td><td colspan="7" class="n">รายได้รวม ${money(T.inc)} · รายการหักรวม ${money(T.ded)}</td><td></td><td class="n net">${money(T.net)}</td></tr></tfoot>`;
-  $('pay-table').querySelectorAll('input').forEach(i=>i.onchange=()=>{S.extra[m]=S.extra[m]||{};const o=S.extra[m][i.dataset.e]=S.extra[m][i.dataset.e]||{other:0,tax:0};o[i.dataset.k]=+i.value||0;save();renderPayroll()})}
-$('p-month').onchange=renderPayroll;
-$('to-slips').onclick=()=>{$('sl-month').value=$('p-month').value;S.employees.forEach(e=>picks.slip.add(e.id));show('slips')};
+    <td class="n neg">${c.dAbsent+c.dUnpaid?'-'+money(c.dAbsent+c.dUnpaid):'–'}</td><td class="n neg">${c.dLate?'-'+money(c.dLate):'–'}</td><td class="n neg">${c.sso?'-'+money(c.sso):'–'}</td>
+    <td class="n"><input type="number" min="0" data-k="tax" data-e="${esc(e.id)}" value="${+c.x.tax||0}" aria-label="ภาษีของ ${esc(e.name)}"></td><td class="n net">${money(c.net)}</td></tr>`}).join('')||`<tr><td colspan="10">${round===1?'ยังไม่มีพนักงานที่รับเงินทุก 15 วัน ตั้งรอบจ่ายได้ที่หน้า พนักงาน':'ยังไม่มีพนักงาน'}</td></tr>`}</tbody>
+   <tfoot><tr><td>รวม ${list.length} คน</td><td colspan="7" class="n">รายได้รวม ${money(T.inc)} · รายการหักรวม ${money(T.ded)}</td><td></td><td class="n net">${money(T.net)}</td></tr></tfoot>`;
+  $('pay-table').querySelectorAll('input').forEach(i=>i.onchange=()=>{S.extra[key]=S.extra[key]||{};const o=S.extra[key][i.dataset.e]=S.extra[key][i.dataset.e]||{other:0,tax:0};o[i.dataset.k]=+i.value||0;save();renderPayroll()})}
+$('p-month').onchange=renderPayroll;$('p-round').onchange=renderPayroll;
+$('to-slips').onclick=()=>{$('sl-month').value=$('p-month').value;$('sl-round').value=$('p-round').value;roundList(+$('p-round').value).forEach(e=>picks.slip.add(e.id));show('slips')};
 
 /* ---------- slips ---------- */
-function renderSlips(){const m=$('sl-month').value;const list=S.employees.filter(e=>picks.slip.has(e.id));
+function renderSlips(){const m=$('sl-month').value,round=+$('sl-round').value;const list=roundList(round).filter(e=>picks.slip.has(e.id));
   const li=(a,b,neg)=>`<div class="li"><span>${a}</span><em>${neg&&b?'-':''}${money(b)}</em></div>`;
-  $('slips').innerHTML=list.map(e=>{const c=calc(e,m);
-   return `<article class="slip"><div class="hd"><div><b>${esc(st.company)}</b>ใบแจ้งเงินเดือน (Pay Slip)</div><div class="r">งวด <b style="display:inline;font-size:15px">${thMonth(m)}</b><br>จ่ายวันที่ ${thDate(m+'-'+String(new Date(+m.slice(0,4),+m.slice(5),0).getDate()))}</div></div>
+  $('slips').innerHTML=list.map(e=>{const c=calc(e,m,round);const mon=new Date(m+'-01T00:00:00').toLocaleDateString('th-TH',{month:'short',year:'numeric'});
+   return `<article class="slip"><div class="hd"><div><b>${esc(st.company)}</b>ใบแจ้งเงินเดือน (Pay Slip)</div><div class="r">งวด <b style="display:inline;font-size:15px">${c.semi?c.d1+'–'+c.d2+' '+mon:thMonth(m)}</b><br>จ่ายวันที่ ${thDate(m+'-'+String(round===1?15:lastDay(m)))}</div></div>
    <div class="who"><div><span>รหัส</span> ${esc(e.id)}</div><div><span>ชื่อ</span> ${esc(e.name)}</div><div><span>แผนก</span> ${esc(e.dept)}</div><div><span>ตำแหน่ง</span> ${esc(e.pos)}</div><div><span>วันเริ่มงาน</span> ${e.start?thDate(e.start):'–'}</div><div style="grid-column:1/-1"><span>โอนเข้าบัญชี</span> ${esc(e.bank)}</div></div>
-   <div class="cols"><div><h4>รายได้</h4>${li('เงินเดือน',e.salary)}${li('ค่าน้ำมัน',e.fuel)}${li('ค่าโทรศัพท์',e.phone)}${li('รายได้อื่น / OT',+c.x.other||0)}<div class="tot"><span>รวมรายได้</span><span>${money(c.income)}</span></div></div>
-   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${li(`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
+   <div class="cols"><div><h4>รายได้</h4>${li(c.semi?'เงินเดือน (ครึ่งเดือน)':'เงินเดือน',c.base)}${li('ค่าน้ำมัน',c.fuel)}${li('ค่าโทรศัพท์',c.phone)}${li('รายได้อื่น / OT',+c.x.other||0)}<div class="tot"><span>รวมรายได้</span><span>${money(c.income)}</span></div></div>
+   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${li(round===1?'ประกันสังคม (หักงวดสิ้นเดือน)':`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
    <div class="netbox"><span>เงินได้สุทธิ</span><em>${money(c.net)} บาท</em></div>
    <div class="att">สรุปปี ${+st.year+543}: วันหยุดประเพณีคงเหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')} วัน · ลาป่วย ${used(e.id,'sick')}/${st.sickQuota} · ลากิจ ${used(e.id,'personal')}/${st.personalQuota} · ลาพักร้อน ${used(e.id,'vacation')}/${st.vacationQuota}</div>
    <div class="sign"><div>ผู้จ่ายเงิน</div><div>ผู้รับเงิน</div></div></article>`}).join('')||'<p class="hint">ติ๊กเลือกพนักงานเพื่อดูสลิป</p>'}
-$('sl-month').onchange=renderSlips;
+$('sl-month').onchange=renderSlips;$('sl-round').onchange=()=>{roundList(+$('sl-round').value).forEach(e=>picks.slip.add(e.id));renderSlips()};
 const framed=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 if(framed){$('print-btn').hidden=true;$('print-note').hidden=false}
 $('print-btn').onclick=()=>window.print();
@@ -543,6 +551,7 @@ function startApp(){useCompany(ROOT.current);$('auth').hidden=true;$('app').hidd
   $('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   $('r-date').value=now.toISOString().slice(0,10);
   ['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
+  const r0=now.getDate()<=15&&S&&S.employees.some(e=>e.cycle==='semi')?'1':'2';$('p-round').value=r0;$('sl-round').value=r0;
   ['pointerdown','keydown','scroll'].forEach(t=>addEventListener(t,bumpIdle,{passive:true}));bumpIdle();
   if(!S)return showWelcome();$('co-name').textContent=st.company;renderCoBar();S.employees.forEach(e=>picks.slip.add(e.id));
   let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'employees')}
