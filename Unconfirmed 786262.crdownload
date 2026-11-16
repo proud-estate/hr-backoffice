@@ -1,0 +1,10 @@
+// ค่าเชื่อมต่อ Firebase ของระบบ HR (แก้ครั้งเดียว ตามขั้นตอนที่ 4 ใน README.md)
+// ถ้ายังไม่แก้ เว็บจะเปิดใน "โหมดทดลอง" ข้อมูลเก็บไว้ในเบราว์เซอร์เครื่องนั้นเท่านั้น
+window.FIREBASE_CONFIG = {
+  apiKey: "ใส่ apiKey",
+  authDomain: "ใส่ authDomain",
+  projectId: "ใส่ projectId",
+  storageBucket: "ใส่ storageBucket",
+  messagingSenderId: "ใส่ messagingSenderId",
+  appId: "ใส่ appId"
+};

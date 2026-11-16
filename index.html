@@ -57,6 +57,16 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .chk input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
 .chk span{display:flex;flex-direction:column;font-size:.9rem;line-height:1.3}
 .chk small{color:var(--muted);font-size:.75rem}
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font:inherit;font-size:.88rem;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.authlinks{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+#booting{text-align:center}
+.sync{font-size:.75rem;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.sync[data-s="pending"]{background:var(--warn-soft);color:var(--warn)}
+.sync[data-s="err"]{background:var(--bad-soft);color:var(--bad)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:min(560px,calc(100% - 32px));z-index:20;padding:10px 16px;border-radius:8px;font-size:.9rem;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.toast.ok{background:var(--accent);color:var(--accent-fg)}
+.toast.err{background:var(--bad);color:var(--surface)}
+.demo-note{margin:0;background:var(--warn-soft);color:var(--warn);font-size:.85rem;text-align:center;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -141,22 +151,34 @@ td input.note-in{width:170px;text-align:left}
 <body>
 
 <div id="auth" class="auth">
-  <form id="auth-form" class="authcard" autocomplete="on">
+  <form id="lgForm" class="authcard" hidden>
     <div class="lock" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" fill="none"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none"/></svg></div>
-    <div><h1 id="auth-title">เข้าสู่ระบบ HR</h1><p class="hint" id="auth-sub">สำหรับเจ้าหน้าที่ HR เท่านั้น</p></div>
-    <label class="f">ชื่อผู้ใช้<input id="a-user" autocomplete="username" required></label>
-    <label class="f">รหัสผ่าน<input id="a-pw" type="password" autocomplete="current-password" required></label>
-    <label class="f" id="a-pw2-wrap" hidden>ยืนยันรหัสผ่าน<input id="a-pw2" type="password" autocomplete="new-password"></label>
-    <button class="btn primary" type="submit" id="a-go">เข้าสู่ระบบ</button>
-    <div id="a-msg" role="alert"></div>
-    <details class="forgot" id="a-forgot"><summary>ลืมรหัสผ่าน</summary>
-      <p class="hint">ข้อมูลถูกเข้ารหัสด้วยรหัสผ่าน จึงกู้คืนรหัสผ่านไม่ได้ ให้ HR คนอื่นที่มีบัญชีเข้าสู่ระบบแล้วตั้งรหัสใหม่ให้ หรือนำไฟล์สำรองข้อมูลมากู้คืน ถ้าไม่มีทั้งสองอย่าง ต้องลบข้อมูลในเครื่องนี้แล้วเริ่มใหม่</p>
-      <button type="button" class="btn danger" id="a-wipe">ลบข้อมูลทั้งหมดในเครื่องนี้และเริ่มใหม่</button>
-    </details>
+    <div><h1>เข้าสู่ระบบ HR</h1><p class="hint">ใช้ชื่อผู้ใช้หรืออีเมลที่ผู้ดูแลระบบสร้างให้ เข้าจากเครื่องไหนก็เห็นข้อมูลชุดเดียวกัน</p></div>
+    <label class="f">ชื่อผู้ใช้หรืออีเมล<input id="lgUser" autocomplete="username" required></label>
+    <label class="f">รหัสผ่าน<input id="lgPass" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit" id="lgGo">เข้าสู่ระบบ</button>
+    <div id="lgMsg" role="alert"></div>
+    <div class="authlinks"><button type="button" class="linkbtn" id="lgForgot">ลืมรหัสผ่าน</button></div>
   </form>
+  <form id="setupForm" class="authcard" hidden>
+    <div class="lock" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" fill="none"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none"/></svg></div>
+    <div><h1>ตั้งค่าครั้งแรก</h1><p class="hint">สร้างบัญชีผู้ดูแลระบบ HR หน้านี้ขึ้นครั้งเดียว บัญชีนี้จะสร้างบัญชีให้ HR คนอื่นได้ แนะนำให้ใช้อีเมลจริง เพื่อรีเซ็ตรหัสผ่านทางอีเมลได้</p></div>
+    <label class="f">ชื่อผู้ดูแลระบบ<input id="suName" required autocomplete="name"></label>
+    <label class="f">อีเมล (หรือชื่อผู้ใช้ภาษาอังกฤษ)<input id="suUser" required autocomplete="username"></label>
+    <label class="f">รหัสผ่าน (อย่างน้อย 8 ตัว)<input id="suPass" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label class="f">ยืนยันรหัสผ่าน<input id="suPass2" type="password" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn primary" type="submit" id="suGo">สร้างบัญชีผู้ดูแลระบบ</button>
+    <div id="suMsg" role="alert"></div>
+  </form>
+  <div id="noRole" class="authcard" hidden>
+    <div><h1>บัญชีนี้ใช้งานระบบ HR ไม่ได้</h1><p class="hint">บัญชีนี้ถูกปิด หรือยังไม่ได้รับสิทธิ์ ติดต่อผู้ดูแลระบบ HR</p></div>
+    <button class="btn" type="button" id="nrOut">ออกจากระบบ</button>
+  </div>
+  <p id="booting" class="hint">กำลังเชื่อมต่อฐานข้อมูล...</p>
 </div>
 
 <div id="app" hidden>
+<p class="demo-note" id="demoNote" hidden>โหมดทดลอง: ยังไม่ได้เชื่อม Firebase ข้อมูลเก็บไว้ในเบราว์เซอร์นี้เท่านั้น และไม่มีหน้าล็อกอิน ดูวิธีตั้งค่าในไฟล์ README.md</p>
 <header class="top">
   <div class="wrap">
     <div class="brand">
@@ -164,7 +186,7 @@ td input.note-in{width:170px;text-align:left}
         <h1 id="co-name">บริษัท</h1>
         <div class="sub">ระบบ HR · วันหยุด การลา และเงินเดือน</div>
       </div>
-      <div class="whobar"><span class="sub" id="today"></span><span class="sub">ผู้ใช้ <b id="me"></b></span><button class="btn small" type="button" id="logout">ออกจากระบบ</button></div>
+      <div class="whobar"><span class="sub" id="today"></span><span class="sub">ผู้ใช้ <b id="me"></b></span><span class="sync" id="sync" data-s="ok">บันทึกแล้ว</span><button class="btn small" type="button" id="logout">ออกจากระบบ</button></div>
     </div>
     <div class="cowrap">
       <span class="colabel">เลือกบริษัทที่ต้องการกรอก</span>
@@ -191,6 +213,7 @@ td input.note-in{width:170px;text-align:left}
 <!-- เริ่มต้น -->
 <section class="panel" id="tab-welcome" hidden>
   <div><h2>เริ่มต้นใช้งาน</h2><p class="hint">ระบบยังไม่มีข้อมูล ทำตามขั้นตอนนี้เพื่อเริ่มใช้งาน</p></div>
+  <p class="msg ok" id="w-found" hidden>พบข้อมูลจากระบบเวอร์ชันเก่าในเบราว์เซอร์นี้ ถ้าต้องการใช้ข้อมูลเดิม ให้กดปุ่มด้านล่าง แล้วไปที่หัวข้อ "นำเข้าข้อมูล"</p>
   <ol class="steps">
     <li><b>เพิ่มบริษัท</b> พิมพ์ชื่อบริษัทในช่องด้านบน แล้วกด เพิ่มบริษัท ถ้ามีหลายบริษัทให้เพิ่มทีละแห่ง</li>
     <li><b>ตั้งวันหยุดและโควตา</b> กำหนดวันหยุดบังคับ โควตาวันลา และอัตราประกันสังคมของบริษัทนั้น</li>
@@ -288,14 +311,15 @@ td input.note-in{width:170px;text-align:left}
 
 <!-- ผู้ใช้ -->
 <section class="panel" id="tab-users" hidden>
-  <div><h2>บัญชีผู้ใช้ HR</h2><p class="hint">เฉพาะคนที่มีบัญชีเท่านั้นที่เข้าระบบได้ ข้อมูลทั้งหมดถูกเข้ารหัสด้วยรหัสผ่าน ระบบออกจากระบบให้เองเมื่อไม่มีการใช้งาน 15 นาที</p></div>
-  <div class="tbl"><table id="user-table"></table></div>
-  <form id="u-add" class="row" hidden>
-    <label class="f" style="flex:1 1 160px">ชื่อผู้ใช้ใหม่<input id="u-name" required autocomplete="off"></label>
-    <label class="f" style="flex:1 1 160px">รหัสผ่าน (อย่างน้อย 8 ตัว)<input id="u-pw" type="password" required minlength="8" autocomplete="new-password"></label>
-    <button class="btn primary" type="submit">เพิ่มผู้ใช้ HR</button>
+  <div><h2>บัญชีผู้ใช้ HR</h2><p class="hint" id="u-hint">เฉพาะคนที่มีบัญชีเท่านั้นที่เข้าระบบได้ ผู้ดูแลระบบสร้างบัญชีให้ HR แต่ละคน แล้วแจ้งชื่อผู้ใช้กับรหัสผ่านให้เจ้าตัว</p></div>
+  <div class="tbl" id="user-wrap"><table id="user-table"></table></div>
+  <form id="u-add" class="grid" hidden>
+    <label class="f">ชื่อ HR<input id="u-name" required autocomplete="off"></label>
+    <label class="f">ชื่อผู้ใช้ (a-z 0-9 . _ -) หรืออีเมล<input id="u-user" required autocomplete="off"></label>
+    <label class="f">รหัสผ่าน (อย่างน้อย 8 ตัว)<input id="u-pw" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label class="f">สิทธิ์<select id="u-role"><option value="hr">เจ้าหน้าที่ HR</option><option value="owner">ผู้ดูแลระบบ</option></select></label>
+    <div class="row" style="grid-column:1/-1"><button class="btn primary" type="submit">สร้างบัญชี HR</button><span id="u-msg"></span></div>
   </form>
-  <span id="u-msg"></span>
   <h3>เปลี่ยนรหัสผ่านของฉัน</h3>
   <form id="u-chg" class="row">
     <label class="f" style="flex:1 1 160px">รหัสผ่านใหม่<input id="u-new" type="password" required minlength="8" autocomplete="new-password"></label>
@@ -303,19 +327,28 @@ td input.note-in{width:170px;text-align:left}
     <button class="btn primary" type="submit">เปลี่ยนรหัสผ่าน</button>
   </form>
   <span id="c-msg"></span>
-  <h3>สำรองและกู้คืนข้อมูล</h3>
-  <p class="hint">ไฟล์สำรองถูกเข้ารหัสไว้ ต้องใช้ชื่อผู้ใช้และรหัสผ่านเดิมจึงจะเปิดได้ ใช้ย้ายข้อมูลไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์ ควรสำรองทุกสิ้นเดือน</p>
-  <div class="row">
-    <button class="btn primary" type="button" id="bk-export">ดาวน์โหลดไฟล์สำรอง</button>
-    <label class="btn" for="bk-file" style="display:inline-block">กู้คืนจากไฟล์สำรอง</label>
-    <input type="file" id="bk-file" accept=".json,application/json" hidden>
-    <span id="bk-msg"></span>
-  </div>
+  <h3>สำรองข้อมูล</h3>
+  <p class="hint">ข้อมูลเก็บในฐานข้อมูลออนไลน์แล้ว แต่ควรดาวน์โหลดไฟล์สำรองเก็บไว้ทุกสิ้นเดือน ไฟล์นี้มีเงินเดือนของทุกคนและไม่ได้ใส่รหัส เก็บในที่ปลอดภัย</p>
+  <div class="row"><button class="btn primary" type="button" id="bk-export">ดาวน์โหลดไฟล์สำรอง</button><span id="bk-msg"></span></div>
+  <h3>นำเข้าข้อมูล</h3>
+  <p class="hint">นำข้อมูลจากระบบเวอร์ชันเก่าที่เก็บไว้ในเครื่อง หรือจากไฟล์สำรอง บริษัทที่มีอยู่แล้วจะไม่ถูกเขียนทับ</p>
+  <p class="msg ok" id="imp-found" hidden>พบข้อมูลจากระบบเวอร์ชันเก่าในเบราว์เซอร์นี้ ใส่ชื่อผู้ใช้และรหัสผ่านที่เคยใช้ในระบบเก่า แล้วกดนำเข้า</p>
+  <form id="imp-form" class="row">
+    <label class="f" style="flex:1 1 160px">ชื่อผู้ใช้ระบบเก่า<input id="imp-user" autocomplete="off"></label>
+    <label class="f" style="flex:1 1 160px">รหัสผ่านระบบเก่า<input id="imp-pw" type="password" autocomplete="off"></label>
+    <label class="f" style="flex:2 1 220px">ไฟล์สำรอง (ไม่ต้องเลือกถ้านำเข้าจากเครื่องนี้)<input id="imp-file" type="file" accept=".json,application/json"></label>
+    <button class="btn primary" type="submit">นำเข้า</button>
+  </form>
+  <span id="imp-msg"></span>
 </section>
 
 </div></main>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
 <script>
 const KEY='hr-payroll-v2';
 const TYPES={holiday:{t:'วันหยุดประเพณี',u:'วัน'},sick:{t:'ลาป่วย',u:'วัน'},personal:{t:'ลากิจ',u:'วัน'},vacation:{t:'ลาพักร้อน',u:'วัน'},unpaid:{t:'ลาไม่รับค่าจ้าง',u:'วัน'},absent:{t:'ขาดงาน',u:'วัน'},late:{t:'มาสาย',u:'นาที'}};
@@ -323,37 +356,70 @@ const now=new Date(); const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).pad
 const DEFAULT_SETTINGS=()=>({company:'',year:now.getFullYear(),holidayQuota:13,sickQuota:30,personalQuota:6,vacationQuota:6,ssoRate:5,ssoCap:15000});
 const newCompany=(id,name)=>({id,settings:{...DEFAULT_SETTINGS(),company:name},employees:[],holidays:[],records:[],extra:{}});
 const EMPTY=()=>({current:null,companies:[]});
-/* ---------- encrypted storage + login ---------- */
+/* ---------- data layer: Firebase when config.js is filled in, otherwise demo mode in this browser ---------- */
+const FB=window.FIREBASE_CONFIG||null;
+const fbReady=!!(FB&&FB.apiKey&&!/ใส่|YOUR_/i.test(FB.apiKey)&&window.firebase);
+let MODE='local',fdb=null,fauth=null,ME=null,unsub=null,started=false,settingUp=false;
+let ROOT={current:null,companies:[]};
+const REVS={},dirty=new Set();let saveT=null,saving=false,saveChain=Promise.resolve(),pendingSnap=null;
+const CUR_KEY='hr-current-company',DEMO_KEY='hr-demo-v1';
+const DOMAIN='@hr-backoffice.local';
+const userEmail=u=>{u=String(u||'').trim().toLowerCase();return u.includes('@')?u:u+DOMAIN};
+const userName=e=>String(e||'').replace(DOMAIN,'');
+const localGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const localSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+function setSync(st,txt){const el=$('sync');if(!el)return;el.dataset.s=st;el.textContent=txt||{ok:'ซิงก์แล้ว',pending:'กำลังบันทึก...',err:'บันทึกไม่สำเร็จ',demo:'โหมดทดลอง'}[st]}
+function normCompany(id,d){d=d||{};const x=d.data||{};return {id,settings:{...DEFAULT_SETTINGS(),...(x.settings||{}),company:d.name||(x.settings||{}).company||''},
+  employees:x.employees||[],holidays:x.holidays||[],records:x.records||[],extra:x.extra||{}}}
+const rowData=c=>({settings:c.settings,employees:c.employees,holidays:c.holidays,records:c.records,extra:c.extra});
+const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
+const ref=(col,id)=>fdb.collection(col).doc(id);
+function persistDemo(){localSet(DEMO_KEY,JSON.stringify({companies:ROOT.companies}))}
+const save=()=>{if(!S)return;if(MODE==='local'){persistDemo();return}dirty.add(S.id);setSync('pending');clearTimeout(saveT);saveT=setTimeout(flush,500)};
+function flush(){clearTimeout(saveT);saveT=null;if(MODE==='local')return Promise.resolve();
+  saveChain=saveChain.then(async()=>{saving=true;const ids=[...dirty];dirty.clear();
+    for(const id of ids){const c=ROOT.companies.find(x=>x.id===id);if(c)await pushCompany(c)}
+    saving=false;setSync(dirty.size?'pending':'ok');if(!dirty.size&&!saveT&&pendingSnap){const sn=pendingSnap;pendingSnap=null;applySnapshot(sn)}})
+   .catch(e=>{saving=false;console.warn(e);setSync('err',e&&e.code==='permission-denied'?'ไม่มีสิทธิ์บันทึก':'บันทึกไม่สำเร็จ');if(S)dirty.add(S.id)});return saveChain}
+async function pushCompany(c){const r=ref('companies',c.id);
+  const res=await fdb.runTransaction(async tx=>{const snap=await tx.get(r);if(!snap.exists)return 'gone';const rev=snap.data().rev||0;
+    if(rev!==(REVS[c.id]||0))return 'conflict';
+    tx.update(r,{name:c.settings.company,data:rowData(c),rev:rev+1,updatedAt:new Date().toISOString(),updatedBy:ME.username});return rev+1});
+  if(typeof res==='number'){REVS[c.id]=res;return}
+  dirty.clear();clearTimeout(saveT);saveT=null;
+  toast(res==='gone'?'บริษัทนี้ถูกลบโดยผู้ใช้อื่นแล้ว':'มีผู้ใช้อื่นแก้ข้อมูลบริษัทนี้ก่อนหน้า ระบบโหลดข้อมูลล่าสุดแล้ว ตรวจสอบรายการล่าสุดที่คุณทำ ถ้าไม่มีให้ทำซ้ำ',false);
+  const fresh=await r.get();if(fresh.exists){REVS[c.id]=fresh.data().rev||0;const i=ROOT.companies.findIndex(x=>x.id===c.id);ROOT.companies[i]=normCompany(c.id,fresh.data())}
+  else{ROOT.companies=ROOT.companies.filter(x=>x.id!==c.id);delete REVS[c.id]}
+  redraw()}
+function redraw(){const keep=S?S.id:localGet(CUR_KEY);useCompany(keep);if(!started)return;if(!S)return showWelcome();
+  $('co-name').textContent=st.company;renderCoBar();render(curTab)}
+function applySnapshot(snap){if(dirty.size||saveT||saving){pendingSnap=snap;return}
+  let changed=snap.docs.length!==ROOT.companies.length;const next=[];
+  snap.docs.forEach(d=>{const data=d.data();REVS[d.id]=data.rev||0;const fresh=normCompany(d.id,data);const old=ROOT.companies.find(c=>c.id===d.id);
+    if(old&&stable(rowData(old))===stable(rowData(fresh))&&old.settings.company===fresh.settings.company)next.push(old);else{next.push(fresh);changed=true}});
+  Object.keys(REVS).forEach(k=>{if(!snap.docs.some(d=>d.id===k))delete REVS[k]});
+  if(next.some((c,i)=>ROOT.companies[i]!==c))changed=true;
+  ROOT.companies=next;if(changed)redraw()}
+function toast(t,ok=true){let el=$('toast');if(!el){el=document.createElement('div');el.id='toast';el.setAttribute('role','status');document.body.appendChild(el)}
+  el.className='toast '+(ok?'ok':'err');el.textContent=t;el.hidden=false;clearTimeout(el._t);el._t=setTimeout(()=>el.hidden=true,ok?3500:9000)}
+async function addCompanyDoc(c,sort){if(MODE==='local'){ROOT.companies.push(c);persistDemo();return}
+  await ref('companies',c.id).set({name:c.settings.company,data:rowData(c),sort,rev:1,updatedAt:new Date().toISOString(),updatedBy:ME.username});
+  REVS[c.id]=1;if(!ROOT.companies.some(x=>x.id===c.id))ROOT.companies.push(c)}
+async function deleteCompanyDoc(id){if(MODE!=='local')await ref('companies',id).delete();ROOT.companies=ROOT.companies.filter(c=>c.id!==id);delete REVS[id];if(MODE==='local')persistDemo()}
+/* old local version (import only) */
 const AUTH_KEY='hr-auth-v1',VAULT_KEY='hr-vault-v1',ITER=310000;
 const te=new TextEncoder(),td=new TextDecoder();
-function b64(buf){const a=new Uint8Array(buf);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)}
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const readJSON=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
-const writeJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
-const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
 async function kek(pw,salt){const base=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
-async function wrapFor(u,pw,raw,role){const salt=rnd(16),iv=rnd(12);const w=await crypto.subtle.encrypt({name:'AES-GCM',iv},await kek(pw,salt),raw);
-  return {u,role,salt:b64(salt),iv:b64(iv),wrapped:b64(w)}}
-let ROOT=null,DK=null,DKraw=null,ME=null;
-const getAuth=()=>{const a=readJSON(AUTH_KEY);return a&&Array.isArray(a.users)&&a.users.length?a:null};
-const validRoot=r=>r&&Array.isArray(r.companies);
-async function persist(){if(!DK||!ROOT)return;const iv=rnd(12);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},DK,te.encode(JSON.stringify(ROOT)));
-  if(!writeJSON(VAULT_KEY,{iv:b64(iv),ct:b64(ct)}))console.warn('บันทึกข้อมูลไม่สำเร็จ')}
-let saveChain=Promise.resolve();
-const save=()=>{saveChain=saveChain.then(persist).catch(e=>console.warn(e))};
-async function setDK(raw){DKraw=new Uint8Array(raw);DK=await crypto.subtle.importKey('raw',DKraw,'AES-GCM',false,['encrypt','decrypt'])}
-async function unlock(u,pw){const A=getAuth();const rec=A&&A.users.find(x=>x.u.toLowerCase()===u.trim().toLowerCase());
-  if(!rec){await kek(pw,rnd(16));throw new Error('bad')}
-  let raw;try{raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(rec.iv)},await kek(pw,unb64(rec.salt)),unb64(rec.wrapped))}catch(e){throw new Error('bad')}
-  await setDK(raw);ME=rec;const V=readJSON(VAULT_KEY);
-  if(V){try{ROOT=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(V.iv)},DK,unb64(V.ct))))}catch(e){throw new Error('vault')}}
-  if(!validRoot(ROOT)){ROOT=EMPTY();await persist()}}
-async function setupFirst(u,pw){const raw=rnd(32);const rec=await wrapFor(u.trim(),pw,raw,'admin');
-  writeJSON(AUTH_KEY,{v:1,users:[rec]});await setDK(raw);ME=rec;ROOT=EMPTY();await persist();
-  try{localStorage.removeItem(KEY);localStorage.removeItem('hr-payroll-v1')}catch(e){}}
+async function openOld(auth,vault,u,pw){const rec=auth&&auth.users&&auth.users.find(x=>x.u.toLowerCase()===u.trim().toLowerCase());if(!rec)throw new Error('cred');
+  let raw;try{raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(rec.iv)},await kek(pw,unb64(rec.salt)),unb64(rec.wrapped))}catch(e){throw new Error('cred')}
+  const dk=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(vault.iv)},dk,unb64(vault.ct))))}
+const hasOldLocal=()=>!!(readJSON(AUTH_KEY)&&readJSON(VAULT_KEY));
 let S,st;
-function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0]||null;ROOT.current=S?S.id:null;st=S?S.settings:null}
+function useCompany(id){S=ROOT.companies.find(c=>c.id===id)||ROOT.companies[0]||null;ROOT.current=S?S.id:null;st=S?S.settings:null;if(S)localSet(CUR_KEY,S.id)}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -417,10 +483,14 @@ function renderHolidays(){Object.entries(sMap).forEach(([k,v])=>$('s-'+k).value=
 Object.entries(sMap).forEach(([k,v])=>$('s-'+k).onchange=e=>{st[v]=k==='co'?e.target.value:+e.target.value;save();$('co-name').textContent=st.company;renderCoBar();renderHolidays()});
 $('hol-form').onsubmit=ev=>{ev.preventDefault();const d=$('h-date').value;if(S.holidays.some(h=>h.date===d))return;
   S.holidays.push({date:d,name:$('h-name').value.trim()});save();ev.target.reset();renderHolidays()};
-$('reset-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทจะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท'},4000);return}
-  ROOT=EMPTY();save();saveChain.then(()=>location.reload())};
-$('del-co-btn').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
-  b.classList.remove('armed');b.textContent='ลบบริษัทนี้';ROOT.companies=ROOT.companies.filter(c=>c.id!==S.id);if(ROOT.companies.length)switchCompany(ROOT.companies[0].id);else{save();showWelcome()}};
+$('reset-btn').onclick=async e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทจะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท'},4000);return}
+  b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท';if(ME.role!=='owner')return toast('เฉพาะผู้ดูแลระบบล้างข้อมูลได้',false);
+  try{await flush();for(const c of [...ROOT.companies])await deleteCompanyDoc(c.id)}catch(err){return toast('ล้างข้อมูลไม่สำเร็จ: '+authMsg(err),false)}
+  showWelcome();toast('ล้างข้อมูลทุกบริษัทแล้ว')};
+$('del-co-btn').onclick=async e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=`กดอีกครั้งเพื่อลบ ${st.company} และพนักงานทั้งหมดของบริษัทนี้`;setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบบริษัทนี้'},4000);return}
+  b.classList.remove('armed');b.textContent='ลบบริษัทนี้';if(ME.role!=='owner')return toast('เฉพาะผู้ดูแลระบบลบบริษัทได้',false);
+  const gone=S.id;try{await flush();await deleteCompanyDoc(gone)}catch(err){return toast('ลบไม่สำเร็จ: '+authMsg(err),false)}
+  toast('ลบบริษัทแล้ว');if(ROOT.companies.length)switchCompany(ROOT.companies[0].id);else showWelcome()};
 
 /* ---------- companies ---------- */
 function renderCoBar(){
@@ -430,11 +500,12 @@ function renderCoBar(){
   $('co-add-btn').onclick=()=>{$('co-add').hidden=false;$('co-new').focus()}}
 function showWelcome(){S=null;st=null;tabs.forEach(x=>$('tab-'+x).hidden=true);$('tab-welcome').hidden=false;document.querySelector('nav.tabs').hidden=true;
   $('co-name').textContent='ยังไม่มีบริษัทในระบบ';renderCoBar();$('co-add').hidden=false;$('co-new').focus()}
-function switchCompany(id){useCompany(id);save();picks.rec.clear();picks.slip.clear();S.employees.forEach(e=>picks.slip.add(e.id));
+function switchCompany(id){useCompany(id);picks.rec.clear();picks.slip.clear();S.employees.forEach(e=>picks.slip.add(e.id));
   resetEmpForm();$('co-name').textContent=st.company;renderCoBar();render(curTab)}
 $('co-add-cancel').onclick=()=>{$('co-add').reset();if(S)$('co-add').hidden=true};
-$('co-add').onsubmit=ev=>{ev.preventDefault();const name=$('co-new').value.trim();if(!name)return;
-  const c=newCompany('c'+Date.now(),name);c.settings.year=now.getFullYear();ROOT.companies.push(c);
+$('co-add').onsubmit=async ev=>{ev.preventDefault();const name=$('co-new').value.trim();if(!name)return;const btn=ev.target.querySelector('button[type=submit]');btn.disabled=true;
+  const c=newCompany('c'+Date.now()+Math.random().toString(36).slice(2,6),name);
+  try{await addCompanyDoc(c,Date.now())}catch(err){btn.disabled=false;return toast('เพิ่มบริษัทไม่สำเร็จ: '+authMsg(err),false)}btn.disabled=false;
   $('co-add').hidden=true;$('co-add').reset();switchCompany(c.id);show('employees')};
 
 /* ---------- records ---------- */
@@ -505,65 +576,109 @@ if(framed){$('print-btn').hidden=true;$('print-note').hidden=false}
 $('print-btn').onclick=()=>window.print();
 
 /* ---------- users & backup ---------- */
-function renderUsers(){const A=getAuth();const admin=ME.role==='admin';$('u-add').hidden=!admin;
-  $('user-table').innerHTML=`<thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th></th></tr></thead><tbody>${A.users.map(x=>`<tr><td>${esc(x.u)}${x.u===ME.u?' <span class="pill t-holiday">คุณ</span>':''}</td><td>${x.role==='admin'?'ผู้ดูแลระบบ':'เจ้าหน้าที่ HR'}</td>
-   <td>${admin&&x.u!==ME.u?`<button class="btn small" data-reset="${esc(x.u)}">ตั้งรหัสใหม่</button> <button class="btn small danger" data-du="${esc(x.u)}">ลบ</button>`:''}</td></tr>`).join('')}</tbody>`;
-  $('user-table').querySelectorAll('[data-du]').forEach(b=>b.onclick=()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อลบ';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
-    const A=getAuth();A.users=A.users.filter(x=>x.u!==b.dataset.du);writeJSON(AUTH_KEY,A);renderUsers()});
-  $('user-table').querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{$('u-name').value=b.dataset.reset;$('u-pw').value='';$('u-pw').focus();flash($('u-msg'),'ใส่รหัสผ่านใหม่ให้ '+b.dataset.reset+' แล้วกด เพิ่มผู้ใช้ HR ระบบจะแทนที่รหัสเดิม')})}
-$('u-add').onsubmit=async ev=>{ev.preventDefault();if(ME.role!=='admin')return;const u=$('u-name').value.trim(),pw=$('u-pw').value;
-  if(pw.length<8)return flash($('u-msg'),'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',false);
-  const A=getAuth();const old=A.users.find(x=>x.u.toLowerCase()===u.toLowerCase());if(old&&old.u===ME.u)return flash($('u-msg'),'เปลี่ยนรหัสของตัวเองที่หัวข้อด้านล่าง',false);
-  const rec=await wrapFor(old?old.u:u,pw,DKraw,old?old.role:'hr');A.users=A.users.filter(x=>x!==old&&x.u!==rec.u);A.users.push(rec);writeJSON(AUTH_KEY,A);
-  ev.target.reset();flash($('u-msg'),old?'ตั้งรหัสผ่านใหม่ให้ '+rec.u+' แล้ว':'เพิ่มผู้ใช้ '+rec.u+' แล้ว');renderUsers()};
+let rolesUnsub=null,roles={};
+function renderUsers(){const owner=ME.role==='owner';$('imp-found').hidden=!hasOldLocal();
+  const local=MODE==='local';$('u-add').hidden=!owner||local;$('u-chg').hidden=local;
+  if(local){$('user-table').innerHTML='<tbody><tr><td>โหมดทดลอง: สร้างบัญชี HR ได้หลังจากเชื่อม Firebase ตามคู่มือ README.md</td></tr></tbody>';return}
+  const list=owner?Object.entries(roles):[[ME.uid,ME]];
+  $('user-table').innerHTML=`<thead><tr><th>ชื่อ</th><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th></th></tr></thead><tbody>${list.sort((a,b)=>(a[1].createdAt||'').localeCompare(b[1].createdAt||'')).map(([uid,r])=>`<tr><td>${esc(r.name)}${uid===ME.uid?' <span class="pill t-holiday">คุณ</span>':''}</td><td>${esc(r.username)}</td><td>${r.role==='owner'?'ผู้ดูแลระบบ':'เจ้าหน้าที่ HR'}</td>
+   <td>${owner&&uid!==ME.uid?`<button class="btn small danger" data-du="${esc(uid)}">ปิดบัญชี</button>`:''}</td></tr>`).join('')}</tbody>`;
+  $('user-table').querySelectorAll('[data-du]').forEach(b=>b.onclick=async()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อปิดบัญชี';setTimeout(()=>{b.classList.remove('armed');b.textContent='ปิดบัญชี'},3000);return}
+    try{await ref('roles',b.dataset.du).delete();flash($('u-msg'),'ปิดบัญชีแล้ว คนนี้จะเข้าระบบไม่ได้อีก')}catch(err){flash($('u-msg'),'ปิดบัญชีไม่สำเร็จ: '+authMsg(err),false)}})}
+$('u-add').onsubmit=async ev=>{ev.preventDefault();const msg=$('u-msg'),btn=ev.target.querySelector('button[type=submit]');
+  const name=$('u-name').value.trim(),user=$('u-user').value.trim().toLowerCase(),pass=$('u-pw').value,role=$('u-role').value;
+  if(!/^[a-z0-9._-]{3,30}$/.test(user)&&!user.includes('@'))return flash(msg,'ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - อย่างน้อย 3 ตัว หรือใช้อีเมล',false);
+  if(pass.length<8)return flash(msg,'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',false);
+  btn.disabled=true;
+  try{const sec=firebase.apps.find(x=>x.name==='hrMaker')||firebase.initializeApp(FB,'hrMaker');
+    const cred=await sec.auth().createUserWithEmailAndPassword(userEmail(user),pass);
+    await ref('roles',cred.user.uid).set({role,name,username:user,createdAt:new Date().toISOString(),createdBy:ME.username});
+    await sec.auth().signOut();ev.target.reset();flash(msg,`สร้างบัญชี ${user} แล้ว แจ้งชื่อผู้ใช้และรหัสผ่านให้ ${name}`)}
+  catch(err){flash(msg,authMsg(err),false)}btn.disabled=false};
 $('u-chg').onsubmit=async ev=>{ev.preventDefault();const p1=$('u-new').value,p2=$('u-new2').value;
   if(p1!==p2)return flash($('c-msg'),'รหัสผ่านทั้งสองช่องไม่ตรงกัน',false);
-  const A=getAuth();const rec=await wrapFor(ME.u,p1,DKraw,ME.role);A.users=A.users.map(x=>x.u===ME.u?rec:x);writeJSON(AUTH_KEY,A);ME=rec;ev.target.reset();flash($('c-msg'),'เปลี่ยนรหัสผ่านแล้ว ใช้รหัสใหม่ในการเข้าครั้งถัดไป')};
-$('bk-export').onclick=async()=>{await saveChain;const data={app:'hr-payroll',v:1,exported:new Date().toISOString(),auth:getAuth(),vault:readJSON(VAULT_KEY)};
-  const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`hr-backup-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
-  flash($('bk-msg'),framed?'ในหน้าตัวอย่างนี้ดาวน์โหลดไม่ได้ ปุ่มนี้ใช้ได้บนเว็บไซต์ของคุณ':'ดาวน์โหลดไฟล์สำรองแล้ว เก็บไว้ในที่ปลอดภัย',!framed)};
-$('bk-file').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(e){d=null}
-  if(!d||d.app!=='hr-payroll'||!d.auth||!d.vault)return flash($('bk-msg'),'ไฟล์นี้ไม่ใช่ไฟล์สำรองของระบบ HR',false);
-  await saveChain;writeJSON(AUTH_KEY,d.auth);writeJSON(VAULT_KEY,d.vault);flash($('bk-msg'),'กู้คืนแล้ว กำลังออกจากระบบ ให้เข้าสู่ระบบด้วยบัญชีในไฟล์สำรอง');setTimeout(()=>location.reload(),1800)};
+  try{await fauth.currentUser.updatePassword(p1);ev.target.reset();flash($('c-msg'),'เปลี่ยนรหัสผ่านแล้ว')}catch(err){flash($('c-msg'),authMsg(err),false)}};
+$('bk-export').onclick=async()=>{await flush();const data={app:'hr-payroll-cloud',v:1,exported:new Date().toISOString(),by:ME.username,companies:ROOT.companies};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`hr-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);flash($('bk-msg'),'ดาวน์โหลดไฟล์สำรองแล้ว')};
+$('imp-form').onsubmit=async ev=>{ev.preventDefault();const msg=$('imp-msg'),f=$('imp-file').files[0];let list;
+  try{if(f){const d=JSON.parse(await f.text());
+      if(d.app==='hr-payroll-cloud')list=d.companies;
+      else if(d.app==='hr-payroll'&&d.auth&&d.vault)list=(await openOld(d.auth,d.vault,$('imp-user').value,$('imp-pw').value)).companies;
+      else return flash(msg,'ไฟล์นี้ไม่ใช่ไฟล์สำรองของระบบ HR',false)}
+    else{if(!hasOldLocal())return flash(msg,'ไม่พบข้อมูลระบบเก่าในเบราว์เซอร์นี้ ให้เลือกไฟล์สำรองแทน',false);
+      list=(await openOld(readJSON(AUTH_KEY),readJSON(VAULT_KEY),$('imp-user').value,$('imp-pw').value)).companies}}
+  catch(e){return flash(msg,e.message==='cred'?'ชื่อผู้ใช้หรือรหัสผ่านระบบเก่าไม่ถูกต้อง':'อ่านข้อมูลไม่สำเร็จ',false)}
+  list=(list||[]).filter(c=>c&&c.id&&c.settings);let added=0,skipped=0;
+  for(const [i,c] of list.entries()){if(ROOT.companies.some(x=>x.id===c.id)){skipped++;continue}
+    try{await addCompanyDoc(normCompany(c.id,{name:c.settings.company,data:c}),Date.now()+i);added++}catch(e){skipped++}}
+  ev.target.reset();flash(msg,`นำเข้า ${added} บริษัท`+(skipped?` · ข้าม ${skipped} บริษัทที่มีอยู่แล้ว`:''),added>0||!skipped);
+  if(added){if(!S)useCompany(ROOT.companies[0].id);$('co-name').textContent=st.company;renderCoBar()}};
 
-/* ---------- login screen ---------- */
-let fails=0,idleT=null;
-const IDLE_MS=15*60*1000;
-function logout(){saveChain.then(()=>location.reload())}
-function bumpIdle(){clearTimeout(idleT);idleT=setTimeout(logout,IDLE_MS)}
+/* ---------- login ---------- */
+function authMsg(e){const c=(e&&e.code)||'';
+  if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c))return 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+  if(/too-many-requests/.test(c))return 'ใส่ผิดหลายครั้ง ระบบล็อกไว้ชั่วคราว รอสักครู่แล้วลองใหม่';
+  if(/email-already-in-use/.test(c))return 'ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว';
+  if(/weak-password/.test(c))return 'รหัสผ่านง่ายเกินไป ใช้อย่างน้อย 8 ตัวอักษร';
+  if(/invalid-email/.test(c))return 'ชื่อผู้ใช้หรืออีเมลไม่ถูกต้อง';
+  if(/network-request-failed|unavailable/.test(c))return 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง';
+  if(/requires-recent-login/.test(c))return 'เพื่อความปลอดภัย ให้ออกจากระบบแล้วเข้าใหม่ก่อนเปลี่ยนรหัสผ่าน';
+  if(/permission-denied/.test(c))return 'บัญชีนี้ไม่มีสิทธิ์ทำรายการนี้';
+  if(/operation-not-allowed/.test(c))return 'ยังไม่ได้เปิดล็อกอินแบบ Email/Password ใน Firebase ดูขั้นตอนใน README.md';
+  return (e&&e.message)||'เกิดข้อผิดพลาด'}
+function showLogin(id){['lgForm','setupForm','noRole'].forEach(x=>$(x).hidden=x!==id);$('booting').hidden=true;$('auth').hidden=false;$('app').hidden=true;
+  const f={lgForm:'lgUser',setupForm:'suName'}[id];if(f)$(f).focus()}
+$('lgForm').onsubmit=async ev=>{ev.preventDefault();$('lgGo').disabled=true;
+  try{await fauth.signInWithEmailAndPassword(userEmail($('lgUser').value),$('lgPass').value);$('lgPass').value=''}catch(err){flash($('lgMsg'),authMsg(err),false)}
+  $('lgGo').disabled=false};
+$('lgForgot').onclick=async()=>{const u=$('lgUser').value.trim();
+  if(!u.includes('@'))return flash($('lgMsg'),'พิมพ์อีเมลในช่องชื่อผู้ใช้ก่อน ถ้าบัญชีใช้ชื่อผู้ใช้ ให้ผู้ดูแลระบบปิดบัญชีเดิมแล้วสร้างให้ใหม่',false);
+  try{await fauth.sendPasswordResetEmail(u);flash($('lgMsg'),'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ '+u+' แล้ว ถ้าไม่เห็นให้ดูในโฟลเดอร์สแปม')}catch(err){flash($('lgMsg'),authMsg(err),false)}};
+$('setupForm').onsubmit=async ev=>{ev.preventDefault();const name=$('suName').value.trim(),user=$('suUser').value.trim().toLowerCase(),pass=$('suPass').value;
+  if(!/^[a-z0-9._-]{3,30}$/.test(user)&&!user.includes('@'))return flash($('suMsg'),'ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - อย่างน้อย 3 ตัว หรือใช้อีเมล',false);
+  if(pass!==$('suPass2').value)return flash($('suMsg'),'รหัสผ่านทั้งสองช่องไม่ตรงกัน',false);
+  $('suGo').disabled=true;settingUp=true;
+  try{const cred=await fauth.createUserWithEmailAndPassword(userEmail(user),pass);const now2=new Date().toISOString();
+    const b=fdb.batch();b.set(ref('meta','owner'),{uid:cred.user.uid,createdAt:now2});b.set(ref('roles',cred.user.uid),{role:'owner',name,username:user,createdAt:now2});await b.commit();
+    settingUp=false;await onUser(cred.user)}
+  catch(err){settingUp=false;flash($('suMsg'),authMsg(err),false)}$('suGo').disabled=false};
+$('nrOut').onclick=()=>fauth.signOut();
+async function logout(){if(MODE==='local')return;await flush().catch(()=>{});await fauth.signOut()}
 $('logout').onclick=logout;
 $('go-users').onclick=()=>show('users');
-const firstRun=!getAuth();
-if(firstRun){$('auth-title').textContent='ตั้งค่าบัญชี HR ครั้งแรก';
-  $('auth-sub').textContent='สร้างบัญชีผู้ดูแลระบบสำหรับเครื่องนี้ ข้อมูลทั้งหมดจะถูกเข้ารหัสด้วยรหัสผ่านนี้ ถ้าลืมรหัสผ่านจะกู้คืนข้อมูลไม่ได้';
-  $('a-pw2-wrap').hidden=false;$('a-pw2').required=true;$('a-pw').autocomplete='new-password';$('a-go').textContent='สร้างบัญชีและเข้าสู่ระบบ';$('a-forgot').hidden=true}
-$('a-wipe').onclick=e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทในเครื่องนี้จะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบข้อมูลทั้งหมดในเครื่องนี้และเริ่มใหม่'},5000);return}
-  try{[AUTH_KEY,VAULT_KEY,KEY,'hr-payroll-v1'].forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()};
-$('auth-form').onsubmit=async ev=>{ev.preventDefault();const msg=$('a-msg'),go=$('a-go');const u=$('a-user').value.trim(),pw=$('a-pw').value;
-  if(!window.crypto||!crypto.subtle)return flash(msg,'เบราว์เซอร์นี้เข้ารหัสข้อมูลไม่ได้ ให้เปิดเว็บผ่านลิงก์ https หรือใช้ Chrome / Edge รุ่นใหม่',false);
-  if(firstRun){if(u.length<3)return flash(msg,'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร',false);
-    if(pw.length<8)return flash(msg,'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',false);
-    if(pw!==$('a-pw2').value)return flash(msg,'รหัสผ่านทั้งสองช่องไม่ตรงกัน',false)}
-  go.disabled=true;const label=go.textContent;go.textContent='กำลังตรวจสอบ...';
-  try{if(firstRun)await setupFirst(u,pw);else await unlock(u,pw);startApp()}
-  catch(e){fails++;$('a-pw').value='';
-    if(e.message==='vault')flash(msg,'เปิดข้อมูลไม่ได้ ข้อมูลในเครื่องนี้อาจเสียหาย ให้กู้คืนจากไฟล์สำรอง',false);
-    else flash(msg,fails>=5?'ใส่ผิดหลายครั้ง รอ 30 วินาทีแล้วลองใหม่':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',false);
-    if(fails>=5){fails=0;setTimeout(()=>{go.disabled=false;go.textContent=label},30000);return}}
-  go.disabled=false;go.textContent=label};
+addEventListener('beforeunload',e=>{if(dirty.size||saveT||saving){flush();e.preventDefault();e.returnValue=''}});
+function stopData(){if(unsub){unsub();unsub=null}if(rolesUnsub){rolesUnsub();rolesUnsub=null}}
+async function onUser(u){stopData();
+  if(!u){let hasOwner=true;try{hasOwner=(await ref('meta','owner').get()).exists}catch(e){}if(started)location.reload();else showLogin(hasOwner?'lgForm':'setupForm');return}
+  let r=null;try{const d=await ref('roles',u.uid).get();r=d.exists?d.data():null}catch(e){}
+  if(!r)return showLogin('noRole');
+  ME={uid:u.uid,role:r.role,name:r.name||userName(u.email),username:r.username||userName(u.email)};MODE='db';
+  let first=true;
+  unsub=fdb.collection('companies').orderBy('sort').onSnapshot(snap=>{
+    if(first){first=false;ROOT.companies=snap.docs.map(d=>{REVS[d.id]=d.data().rev||0;return normCompany(d.id,d.data())});startApp()}
+    else applySnapshot(snap);
+    if(!snap.metadata.hasPendingWrites&&!dirty.size&&!saveT&&!saving)setSync('ok')},
+   err=>{setSync('err','เชื่อมต่อขาด');if(first)showLogin('noRole')});
+  if(r.role==='owner')rolesUnsub=fdb.collection('roles').onSnapshot(snap=>{roles={};snap.docs.forEach(d=>roles[d.id]=d.data());if(curTab==='users'&&started)renderUsers()},()=>{})}
 
 /* ---------- init ---------- */
 function render(t){({employees:renderEmployees,holidays:renderHolidays,records:renderRecords,payroll:renderPayroll,slips:()=>{renderPicker($('slip-picker'),'slip');renderSlips()},users:renderUsers})[t]()}
-function startApp(){useCompany(ROOT.current);$('auth').hidden=true;$('app').hidden=false;$('me').textContent=ME.u;
+function startApp(){useCompany(localGet(CUR_KEY));$('auth').hidden=true;$('app').hidden=false;$('me').textContent=ME.name;setSync(MODE==='local'?'demo':'ok');
+  $('demoNote').hidden=MODE!=='local';$('logout').hidden=MODE==='local';
   $('today').textContent='วันนี้ '+now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   $('r-date').value=now.toISOString().slice(0,10);
   ['r-month','p-month','sl-month'].forEach(i=>$(i).value=ym(now));
   const r0=now.getDate()<=15&&S&&S.employees.some(e=>e.cycle==='semi')?'1':'2';$('p-round').value=r0;$('sl-round').value=r0;
-  ['pointerdown','keydown','scroll'].forEach(t=>addEventListener(t,bumpIdle,{passive:true}));bumpIdle();
+  $('w-found').hidden=!hasOldLocal();started=true;
   if(!S)return showWelcome();$('co-name').textContent=st.company;renderCoBar();S.employees.forEach(e=>picks.slip.add(e.id));
   let t0;try{t0=localStorage.getItem(KEY+'-tab')}catch(e){} show(t0||'employees')}
-$('a-user').focus();
+(function boot(){
+  if(!fbReady){MODE='local';ME={uid:'demo',role:'owner',name:'โหมดทดลอง',username:'demo'};
+    try{const d=JSON.parse(localGet(DEMO_KEY));if(d&&Array.isArray(d.companies))ROOT.companies=d.companies}catch(e){}
+    return startApp()}
+  firebase.initializeApp(FB);fdb=firebase.firestore();try{fdb.settings({ignoreUndefinedProperties:true,merge:true})}catch(e){}fauth=firebase.auth();
+  fauth.onAuthStateChanged(u=>{if(settingUp)return;onUser(u)})})();
 </script>
 
 </body>
