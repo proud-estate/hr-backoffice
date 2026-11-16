@@ -53,6 +53,10 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .whobar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
 .steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;max-width:65ch}
 .steps b{display:block}
+.chk{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);cursor:pointer;align-self:end}
+.chk input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.chk span{display:flex;flex-direction:column;font-size:.9rem;line-height:1.3}
+.chk small{color:var(--muted);font-size:.75rem}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -209,6 +213,7 @@ td input{width:96px;padding:4px 6px;text-align:right}
     <label class="f">ค่าน้ำมัน / เดือน<input id="e-fuel" type="number" min="0" step="1" value="0"></label>
     <label class="f">ค่าโทรศัพท์ / เดือน<input id="e-phone" type="number" min="0" step="1" value="0"></label>
     <label class="f">บัญชีธนาคาร<input id="e-bank" placeholder="ธนาคาร เลขบัญชี"></label>
+    <label class="chk"><input id="e-sso" type="checkbox" checked><span>หักประกันสังคม<small>เอาติ๊กออกถ้าพนักงานคนนี้ไม่มีประกันสังคม</small></span></label>
     <div class="row" style="grid-column:1/-1">
       <button class="btn primary" type="submit" id="e-save">เพิ่มพนักงาน</button>
       <button class="btn" type="button" id="e-cancel" hidden>ยกเลิกการแก้ไข</button>
@@ -383,10 +388,10 @@ function renderEmployees(){
   $('dl-dept').innerHTML=uniq('dept');$('dl-pos').innerHTML=uniq('pos');
   $('emp-table').innerHTML=`<thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก / ตำแหน่ง</th><th>วันเริ่มงาน</th><th>รอบจ่าย</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th>บัญชี</th><th></th></tr></thead><tbody>${
   S.employees.length?'':`<tr><td colspan="10">ยังไม่มีพนักงานใน${esc(st.company)} เริ่มเพิ่มคนแรกจากฟอร์มด้านบน</td></tr>`}${
-  S.employees.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)} · ${esc(e.pos)}</td><td>${e.start?thDate(e.start)+` <span class="hint">(${tenure(e.start)})</span>`:'<span class="hint">ยังไม่ระบุ</span>'}</td><td>${cycleChip(e)}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td><td>${esc(e.bank)}</td>
+  S.employees.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.dept)} · ${esc(e.pos)}</td><td>${e.start?thDate(e.start)+` <span class="hint">(${tenure(e.start)})</span>`:'<span class="hint">ยังไม่ระบุ</span>'}</td><td>${cycleChip(e)}${e.sso===false?' <span class="pill t-absent">ไม่มีประกันสังคม</span>':''}</td><td class="n">${money(e.salary)}</td><td class="n">${money(e.fuel)}</td><td class="n">${money(e.phone)}</td><td>${esc(e.bank)}</td>
   <td><button class="btn small" data-edit="${esc(e.id)}">แก้ไข</button> <button class="btn small danger" data-del="${esc(e.id)}">ลบ</button></td></tr>`).join('')}</tbody>`;
   $('emp-table').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const e=emp(b.dataset.edit);editing=e.id;
-    ['id','name','dept','pos','start','salary','fuel','phone','bank'].forEach(k=>$('e-'+k).value=e[k]??'');$('e-cycle').value=e.cycle||'monthly';$('e-id').disabled=true;$('e-save').textContent='บันทึกการแก้ไข';$('e-cancel').hidden=false;$('e-name').focus()});
+    ['id','name','dept','pos','start','salary','fuel','phone','bank'].forEach(k=>$('e-'+k).value=e[k]??'');$('e-cycle').value=e.cycle||'monthly';$('e-sso').checked=e.sso!==false;$('e-id').disabled=true;$('e-save').textContent='บันทึกการแก้ไข';$('e-cancel').hidden=false;$('e-name').focus()});
   $('emp-table').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อลบ';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
     S.employees=S.employees.filter(e=>e.id!==b.dataset.del);save();renderCoBar();renderEmployees()});
 }
@@ -395,7 +400,7 @@ function resetEmpForm(){editing=null;$('emp-form').reset();$('e-id').disabled=fa
 $('e-cancel').onclick=resetEmpForm;
 $('emp-form').onsubmit=ev=>{ev.preventDefault();const id=$('e-id').value.trim();
   if(!editing&&emp(id))return flash($('e-msg'),'รหัส '+id+' มีอยู่แล้ว ใช้รหัสอื่น',false);
-  const d={id,name:$('e-name').value.trim(),dept:$('e-dept').value.trim(),pos:$('e-pos').value.trim(),start:$('e-start').value,cycle:$('e-cycle').value,salary:+$('e-salary').value||0,fuel:+$('e-fuel').value||0,phone:+$('e-phone').value||0,bank:$('e-bank').value.trim()};
+  const d={id,name:$('e-name').value.trim(),dept:$('e-dept').value.trim(),pos:$('e-pos').value.trim(),start:$('e-start').value,cycle:$('e-cycle').value,sso:$('e-sso').checked,salary:+$('e-salary').value||0,fuel:+$('e-fuel').value||0,phone:+$('e-phone').value||0,bank:$('e-bank').value.trim()};
   if(editing){Object.assign(emp(editing),d,{id:editing})}else S.employees.push(d);
   save();flash($('e-msg'),editing?'บันทึกการแก้ไขแล้ว':'เพิ่ม '+d.name+' แล้ว');resetEmpForm();renderCoBar();renderEmployees()};
 
@@ -465,9 +470,9 @@ function calc(e,m,round=2){const semi=e.cycle==='semi';const key=periodKey(m,rou
   const sum=t=>S.records.filter(r=>{if(r.emp!==e.id||r.type!==t||!r.date.startsWith(m))return false;const d=+r.date.slice(8,10);return d>=d1&&d<=d2}).reduce((a,r)=>a+r.amount,0);
   const f=semi?0.5:1,base=e.salary*f,fuel=e.fuel*f,phone=e.phone*f;
   const daily=e.salary/30,absentD=sum('absent'),unpaidD=sum('unpaid'),lateM=sum('late');
-  const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,sso=round===2?Math.min(e.salary,st.ssoCap)*st.ssoRate/100:0;
+  const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,noSso=e.sso===false,sso=round===2&&!noSso?Math.min(e.salary,st.ssoCap)*st.ssoRate/100:0;
   const income=base+fuel+phone+(+x.other||0),deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0);
-  return {x,semi,d1,d2:Math.min(d2,lastDay(m)),base,fuel,phone,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
+  return {x,semi,noSso,d1,d2:Math.min(d2,lastDay(m)),base,fuel,phone,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
 function renderPayroll(){const m=$('p-month').value,round=+$('p-round').value,key=periodKey(m,round),list=roundList(round);let T={inc:0,ded:0,net:0};
   $('pay-table').innerHTML=`<thead><tr><th>พนักงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th class="n">รายได้อื่น/OT</th><th class="n">หักขาด+ลาไม่รับค่าจ้าง</th><th class="n">หักมาสาย</th><th class="n">ประกันสังคม</th><th class="n">ภาษี ณ ที่จ่าย</th><th class="n">รับสุทธิ</th></tr></thead><tbody>${
    list.map(e=>{const c=calc(e,m,round);T.inc+=c.income;T.ded+=c.deduct;T.net+=c.net;
@@ -487,7 +492,7 @@ function renderSlips(){const m=$('sl-month').value,round=+$('sl-round').value;co
    return `<article class="slip"><div class="hd"><div><b>${esc(st.company)}</b>ใบแจ้งเงินเดือน (Pay Slip)</div><div class="r">งวด <b style="display:inline;font-size:15px">${c.semi?c.d1+'–'+c.d2+' '+mon:thMonth(m)}</b><br>จ่ายวันที่ ${thDate(m+'-'+String(round===1?15:lastDay(m)))}</div></div>
    <div class="who"><div><span>รหัส</span> ${esc(e.id)}</div><div><span>ชื่อ</span> ${esc(e.name)}</div><div><span>แผนก</span> ${esc(e.dept)}</div><div><span>ตำแหน่ง</span> ${esc(e.pos)}</div><div><span>วันเริ่มงาน</span> ${e.start?thDate(e.start):'–'}</div><div style="grid-column:1/-1"><span>โอนเข้าบัญชี</span> ${esc(e.bank)}</div></div>
    <div class="cols"><div><h4>รายได้</h4>${li(c.semi?'เงินเดือน (ครึ่งเดือน)':'เงินเดือน',c.base)}${li('ค่าน้ำมัน',c.fuel)}${li('ค่าโทรศัพท์',c.phone)}${li('รายได้อื่น / OT',+c.x.other||0)}<div class="tot"><span>รวมรายได้</span><span>${money(c.income)}</span></div></div>
-   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${li(round===1?'ประกันสังคม (หักงวดสิ้นเดือน)':`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
+   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${c.noSso?li('ประกันสังคม (ไม่มี)',0,1):li(round===1?'ประกันสังคม (หักงวดสิ้นเดือน)':`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
    <div class="netbox"><span>เงินได้สุทธิ</span><em>${money(c.net)} บาท</em></div>
    <div class="att">สรุปปี ${+st.year+543}: วันหยุดประเพณีคงเหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')} วัน · ลาป่วย ${used(e.id,'sick')}/${st.sickQuota} · ลากิจ ${used(e.id,'personal')}/${st.personalQuota} · ลาพักร้อน ${used(e.id,'vacation')}/${st.vacationQuota}</div>
    <div class="sign"><div>ผู้จ่ายเงิน</div><div>ผู้รับเงิน</div></div></article>`}).join('')||'<p class="hint">ติ๊กเลือกพนักงานเพื่อดูสลิป</p>'}
