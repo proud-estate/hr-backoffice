@@ -85,6 +85,7 @@ td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular
 tr:last-child td{border-bottom:0}
 tfoot td{font-weight:600;background:var(--sunk)}
 td input{width:96px;padding:4px 6px;text-align:right}
+td input.note-in{width:170px;text-align:left}
 .neg{color:var(--bad)}
 .net{color:var(--good);font-weight:600}
 .pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--fg)}
@@ -471,17 +472,19 @@ function calc(e,m,round=2){const semi=e.cycle==='semi';const key=periodKey(m,rou
   const f=semi?0.5:1,base=e.salary*f,fuel=e.fuel*f,phone=e.phone*f;
   const daily=e.salary/30,absentD=sum('absent'),unpaidD=sum('unpaid'),lateM=sum('late');
   const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,noSso=e.sso===false,sso=round===2&&!noSso?Math.min(e.salary,st.ssoCap)*st.ssoRate/100:0;
-  const income=base+fuel+phone+(+x.other||0),deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0);
-  return {x,semi,noSso,d1,d2:Math.min(d2,lastDay(m)),base,fuel,phone,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
+  const income=base+fuel+phone+(+x.other||0),otherDed=+x.otherDed||0,deduct=dAbsent+dUnpaid+dLate+sso+(+x.tax||0)+otherDed;
+  return {x,otherDed,semi,noSso,d1,d2:Math.min(d2,lastDay(m)),base,fuel,phone,absentD,unpaidD,lateM,dAbsent,dUnpaid,dLate,sso,income,deduct,net:income-deduct}}
 function renderPayroll(){const m=$('p-month').value,round=+$('p-round').value,key=periodKey(m,round),list=roundList(round);let T={inc:0,ded:0,net:0};
-  $('pay-table').innerHTML=`<thead><tr><th>พนักงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th class="n">รายได้อื่น/OT</th><th class="n">หักขาด+ลาไม่รับค่าจ้าง</th><th class="n">หักมาสาย</th><th class="n">ประกันสังคม</th><th class="n">ภาษี ณ ที่จ่าย</th><th class="n">รับสุทธิ</th></tr></thead><tbody>${
+  $('pay-table').innerHTML=`<thead><tr><th>พนักงาน</th><th class="n">เงินเดือน</th><th class="n">ค่าน้ำมัน</th><th class="n">ค่าโทรศัพท์</th><th class="n">รายได้อื่น/OT</th><th class="n">หักขาด+ลาไม่รับค่าจ้าง</th><th class="n">หักมาสาย</th><th class="n">ประกันสังคม</th><th class="n">ภาษี ณ ที่จ่าย</th><th class="n">หักค่าใช้จ่ายอื่นๆ</th><th>หมายเหตุรายการหัก</th><th class="n">รับสุทธิ</th></tr></thead><tbody>${
    list.map(e=>{const c=calc(e,m,round);T.inc+=c.income;T.ded+=c.deduct;T.net+=c.net;
     return `<tr><td>${esc(e.name)} ${c.semi?'<span class="pill t-late">'+c.d1+'–'+c.d2+'</span>':''}</td><td class="n">${money(c.base)}</td><td class="n">${money(c.fuel)}</td><td class="n">${money(c.phone)}</td>
     <td class="n"><input type="number" min="0" data-k="other" data-e="${esc(e.id)}" value="${+c.x.other||0}" aria-label="รายได้อื่นของ ${esc(e.name)}"></td>
     <td class="n neg">${c.dAbsent+c.dUnpaid?'-'+money(c.dAbsent+c.dUnpaid):'–'}</td><td class="n neg">${c.dLate?'-'+money(c.dLate):'–'}</td><td class="n neg">${c.sso?'-'+money(c.sso):'–'}</td>
-    <td class="n"><input type="number" min="0" data-k="tax" data-e="${esc(e.id)}" value="${+c.x.tax||0}" aria-label="ภาษีของ ${esc(e.name)}"></td><td class="n net">${money(c.net)}</td></tr>`}).join('')||`<tr><td colspan="10">${round===1?'ยังไม่มีพนักงานที่รับเงินทุก 15 วัน ตั้งรอบจ่ายได้ที่หน้า พนักงาน':'ยังไม่มีพนักงาน'}</td></tr>`}</tbody>
-   <tfoot><tr><td>รวม ${list.length} คน</td><td colspan="7" class="n">รายได้รวม ${money(T.inc)} · รายการหักรวม ${money(T.ded)}</td><td></td><td class="n net">${money(T.net)}</td></tr></tfoot>`;
-  $('pay-table').querySelectorAll('input').forEach(i=>i.onchange=()=>{S.extra[key]=S.extra[key]||{};const o=S.extra[key][i.dataset.e]=S.extra[key][i.dataset.e]||{other:0,tax:0};o[i.dataset.k]=+i.value||0;save();renderPayroll()})}
+    <td class="n"><input type="number" min="0" data-k="tax" data-e="${esc(e.id)}" value="${+c.x.tax||0}" aria-label="ภาษีของ ${esc(e.name)}"></td>
+    <td class="n"><input type="number" min="0" data-k="otherDed" data-e="${esc(e.id)}" value="${c.otherDed}" aria-label="หักค่าใช้จ่ายอื่นๆ ของ ${esc(e.name)}"></td>
+    <td><input type="text" class="note-in" data-k="dedNote" data-e="${esc(e.id)}" value="${esc(c.x.dedNote||'')}" placeholder="เช่น เบิกล่วงหน้า" aria-label="หมายเหตุรายการหักของ ${esc(e.name)}"></td><td class="n net">${money(c.net)}</td></tr>`}).join('')||`<tr><td colspan="12">${round===1?'ยังไม่มีพนักงานที่รับเงินทุก 15 วัน ตั้งรอบจ่ายได้ที่หน้า พนักงาน':'ยังไม่มีพนักงาน'}</td></tr>`}</tbody>
+   <tfoot><tr><td>รวม ${list.length} คน</td><td colspan="9" class="n">รายได้รวม ${money(T.inc)} · รายการหักรวม ${money(T.ded)}</td><td></td><td class="n net">${money(T.net)}</td></tr></tfoot>`;
+  $('pay-table').querySelectorAll('input').forEach(i=>i.onchange=()=>{S.extra[key]=S.extra[key]||{};const o=S.extra[key][i.dataset.e]=S.extra[key][i.dataset.e]||{other:0,tax:0};o[i.dataset.k]=i.dataset.k==='dedNote'?i.value.trim():+i.value||0;save();renderPayroll()})}
 $('p-month').onchange=renderPayroll;$('p-round').onchange=renderPayroll;
 $('to-slips').onclick=()=>{$('sl-month').value=$('p-month').value;$('sl-round').value=$('p-round').value;roundList(+$('p-round').value).forEach(e=>picks.slip.add(e.id));show('slips')};
 
@@ -492,7 +495,7 @@ function renderSlips(){const m=$('sl-month').value,round=+$('sl-round').value;co
    return `<article class="slip"><div class="hd"><div><b>${esc(st.company)}</b>ใบแจ้งเงินเดือน (Pay Slip)</div><div class="r">งวด <b style="display:inline;font-size:15px">${c.semi?c.d1+'–'+c.d2+' '+mon:thMonth(m)}</b><br>จ่ายวันที่ ${thDate(m+'-'+String(round===1?15:lastDay(m)))}</div></div>
    <div class="who"><div><span>รหัส</span> ${esc(e.id)}</div><div><span>ชื่อ</span> ${esc(e.name)}</div><div><span>แผนก</span> ${esc(e.dept)}</div><div><span>ตำแหน่ง</span> ${esc(e.pos)}</div><div><span>วันเริ่มงาน</span> ${e.start?thDate(e.start):'–'}</div><div style="grid-column:1/-1"><span>โอนเข้าบัญชี</span> ${esc(e.bank)}</div></div>
    <div class="cols"><div><h4>รายได้</h4>${li(c.semi?'เงินเดือน (ครึ่งเดือน)':'เงินเดือน',c.base)}${li('ค่าน้ำมัน',c.fuel)}${li('ค่าโทรศัพท์',c.phone)}${li('รายได้อื่น / OT',+c.x.other||0)}<div class="tot"><span>รวมรายได้</span><span>${money(c.income)}</span></div></div>
-   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${c.noSso?li('ประกันสังคม (ไม่มี)',0,1):li(round===1?'ประกันสังคม (หักงวดสิ้นเดือน)':`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
+   <div><h4>รายการหัก</h4>${li(`ขาดงาน ${c.absentD} วัน`,c.dAbsent,1)}${li(`ลาไม่รับค่าจ้าง ${c.unpaidD} วัน`,c.dUnpaid,1)}${li(`มาสาย ${c.lateM} นาที`,c.dLate,1)}${c.noSso?li('ประกันสังคม (ไม่มี)',0,1):li(round===1?'ประกันสังคม (หักงวดสิ้นเดือน)':`ประกันสังคม ${st.ssoRate}%`,c.sso,1)}${li('ภาษีหัก ณ ที่จ่าย',+c.x.tax||0,1)}${li('หักค่าใช้จ่ายอื่นๆ'+(c.x.dedNote?' ('+esc(c.x.dedNote)+')':''),c.otherDed,1)}<div class="tot"><span>รวมรายการหัก</span><span>${money(c.deduct)}</span></div></div></div>
    <div class="netbox"><span>เงินได้สุทธิ</span><em>${money(c.net)} บาท</em></div>
    <div class="att">สรุปปี ${+st.year+543}: วันหยุดประเพณีคงเหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')} วัน · ลาป่วย ${used(e.id,'sick')}/${st.sickQuota} · ลากิจ ${used(e.id,'personal')}/${st.personalQuota} · ลาพักร้อน ${used(e.id,'vacation')}/${st.vacationQuota}</div>
    <div class="sign"><div>ผู้จ่ายเงิน</div><div>ผู้รับเงิน</div></div></article>`}).join('')||'<p class="hint">ติ๊กเลือกพนักงานเพื่อดูสลิป</p>'}
