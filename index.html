@@ -71,6 +71,14 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .pubchk input{width:18px;height:18px;accent-color:var(--accent)}
 .pubchk input:checked+span{color:var(--accent);font-weight:600}
 .pubchk span{color:var(--muted);font-size:.85rem}
+.yearsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.yearsum .ys{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg);display:flex;flex-direction:column;gap:2px}
+.yearsum .ys span{font-size:.78rem;color:var(--muted)}
+.yearsum .ys b{font-family:var(--f-num);font-size:1.05rem;font-weight:500}
+.yearsum .ys.over b{color:var(--bad)}
+.yearsum .ys small{font-size:.75rem;color:var(--muted)}
+.linkname{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.btn.attach{border-style:dashed;color:var(--muted)}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -101,6 +109,7 @@ tfoot td{font-weight:600;background:var(--sunk)}
 td input{width:96px;padding:4px 6px;text-align:right}
 td input.note-in{width:170px;text-align:left}
 .neg{color:var(--bad)}
+.hint.neg{color:var(--bad);font-weight:600}
 .net{color:var(--good);font-weight:600}
 .pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--fg)}
 .pill.t-holiday{background:var(--accent-soft);color:var(--accent)}
@@ -292,14 +301,18 @@ td input.note-in{width:170px;text-align:left}
     <label class="f" id="r-to-wrap">ถึงวันที่ (ลาวันเดียวไม่ต้องใส่)<input id="r-to" type="date"></label>
     <label class="f"><span id="r-amt-label">จำนวนวัน</span><input id="r-amt" type="number" min="0.5" step="0.5" value="1" required></label>
     <label class="f">หมายเหตุ<input id="r-note"></label>
-    <label class="f" id="r-cert-wrap" hidden style="grid-column:1/-1">ใบรับรองแพทย์ (สแกนหรือถ่ายรูป หรือไฟล์ PDF ไม่เกิน 700 KB)<input id="r-cert" type="file" accept="image/*,application/pdf"></label>
-    <p class="hint" id="r-cert-hint" hidden style="grid-column:1/-1">ลาป่วยตั้งแต่ 3 วันทำงานขึ้นไป นายจ้างขอใบรับรองแพทย์ได้ แนบตอนนี้ หรือกด "แนบใบรับรอง" ในรายการที่บันทึกภายหลังก็ได้ รูปจะถูกย่อขนาดให้อัตโนมัติ</p>
+    <label class="f" id="r-cert-wrap" style="grid-column:1/-1"><span id="r-cert-label">แนบใบลา (สแกนหรือถ่ายรูป หรือไฟล์ PDF ไม่เกิน 700 KB) ไม่บังคับ</span><input id="r-cert" type="file" accept="image/*,application/pdf"></label>
+    <p class="hint" id="r-cert-hint" style="grid-column:1/-1">แนบตอนนี้ หรือกดปุ่มแนบในรายการที่บันทึกภายหลังก็ได้ แนบได้ทีละคน รูปจะถูกย่อขนาดให้อัตโนมัติ</p>
     <p class="hint" id="r-hint" style="grid-column:1/-1">ใส่ช่วงวันที่แล้ว ระบบจะนับจำนวนวันทำงานให้ (ไม่นับวันหยุดประจำสัปดาห์และวันหยุดบริษัท) แก้จำนวนเองได้ เช่น ลาครึ่งวันใส่ 0.5</p>
     <div class="row" style="grid-column:1/-1"><button class="btn primary" type="submit">บันทึก</button><span id="r-msg"></span></div>
   </form>
   <h3>ยอดคงเหลือปีนี้</h3>
   <div class="tbl"><table id="quota-table"></table></div>
-  <div class="row"><h3 style="flex:1">รายการที่บันทึก</h3><label class="f" style="width:180px">เดือน<input id="r-month" type="month"></label></div>
+  <div class="row" id="rec-list"><h3 style="flex:1 1 200px">รายการที่บันทึก</h3>
+    <label class="f" style="width:150px">ดูแบบ<select id="r-view"><option value="year">ทั้งปี</option><option value="month">รายเดือน</option></select></label>
+    <label class="f" style="width:170px" id="r-month-wrap">เดือน<input id="r-month" type="month"></label>
+    <label class="f" style="width:220px">พนักงาน<select id="r-emp"></select></label></div>
+  <div id="r-yearsum" class="yearsum" hidden></div>
   <div class="tbl"><table id="rec-table"></table></div>
 </section>
 
@@ -586,7 +599,7 @@ async function saveCert(f,empId){const p=await prepCert(f);const id='f'+Date.now
   if(MODE==='local'){try{localStorage.setItem('hr-demo-file-'+id,JSON.stringify(doc))}catch(e){throw new Error('พื้นที่ในเบราว์เซอร์เต็ม')}}else await ref('files',id).set(doc);
   return id}
 async function openCert(id){let d;if(MODE==='local'){try{d=JSON.parse(localStorage.getItem('hr-demo-file-'+id))}catch(e){}}else{const sn=await ref('files',id).get();d=sn.exists?sn.data():null}
-  if(!d)return toast('ไม่พบไฟล์ใบรับรอง',false);
+  if(!d)return toast('ไม่พบไฟล์ใบลา',false);
   const bin=atob(d.data),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
   const url=URL.createObjectURL(new Blob([u8],{type:d.type}));const w=window.open(url,'_blank');
   if(!w){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}setTimeout(()=>URL.revokeObjectURL(url),60000)}
@@ -594,24 +607,38 @@ async function dropCert(id){if(!id||S.records.some(r=>r.certId===id))return;try{
 function autoAmt(){if($('r-type').value==='late')return;const a=$('r-date').value,b=$('r-to').value;if(!a)return;
   if(!b||b===a){$('r-amt').value=1;return}if(b<a)return;$('r-amt').value=workDaysIn(a,b).length}
 $('r-type').onchange=()=>{const late=$('r-type').value==='late';$('r-amt-label').textContent=late?'จำนวนนาทีที่สาย':'จำนวนวัน';$('r-amt').step=late?1:0.5;$('r-amt').min=late?1:0.5;
-  $('r-to-wrap').hidden=late;$('r-hint').hidden=late;const sick=$('r-type').value==='sick';$('r-cert-wrap').hidden=!sick;$('r-cert-hint').hidden=!sick;if(!sick)$('r-cert').value='';$('r-date-label').textContent=late?'วันที่':'ตั้งแต่วันที่';if(late){$('r-to').value='';$('r-amt').value=15}else autoAmt()};
+  $('r-to-wrap').hidden=late;$('r-hint').hidden=late;const sick=$('r-type').value==='sick';$('r-cert-wrap').hidden=late;$('r-cert-hint').hidden=late;if(late)$('r-cert').value='';
+  $('r-cert-label').textContent=sick?'แนบใบลา / ใบรับรองแพทย์ (สแกนหรือถ่ายรูป หรือ PDF ไม่เกิน 700 KB) ลาป่วยตั้งแต่ 3 วันทำงาน นายจ้างขอใบรับรองแพทย์ได้':'แนบใบลา (สแกนหรือถ่ายรูป หรือ PDF ไม่เกิน 700 KB) ไม่บังคับ';$('r-date-label').textContent=late?'วันที่':'ตั้งแต่วันที่';if(late){$('r-to').value='';$('r-amt').value=15}else autoAmt()};
 $('r-date').onchange=autoAmt;$('r-to').onchange=autoAmt;
 function renderRecords(){renderPicker($('rec-picker'),'rec');
-  const meter=(u,q)=>`${u} / ${q}<span class="meter"><i class="${u>q?'over':''}" style="width:${Math.min(100,u/q*100)}%"></i></span>`;
+  const meter=(u,q)=>`${u} / ${q}<span class="meter"><i class="${u>q?'over':''}" style="width:${q>0?Math.min(100,u/q*100):(u>0?100:0)}%"></i></span>`;
+  const left=(u,q)=>q-u>=0?`<span class="hint">เหลือ ${q-u}</span>`:`<span class="hint neg">เกิน ${u-q} วัน</span>`;
   $('quota-table').innerHTML=`<thead><tr><th>พนักงาน</th><th>วันหยุดประเพณี (รวมวันที่บริษัทหยุด)</th><th>ลาป่วย</th><th>ลากิจ</th><th>ลาพักร้อน</th><th class="n">ขาด (วัน)</th><th class="n">สาย (นาที)</th></tr></thead><tbody>${
-   S.employees.map(e=>`<tr><td>${esc(e.name)}</td><td>${meter(usedTotal(e.id,'holiday'),st.holidayQuota)} <span class="hint">เหลือ ${st.holidayQuota-usedTotal(e.id,'holiday')}</span></td><td>${meter(used(e.id,'sick'),st.sickQuota)}</td><td>${meter(used(e.id,'personal'),st.personalQuota)}</td><td>${meter(used(e.id,'vacation'),st.vacationQuota)}</td><td class="n">${used(e.id,'absent')}</td><td class="n">${used(e.id,'late')}</td></tr>`).join('')}</tbody>`;
-  const m=$('r-month').value; const rows=S.records.filter(r=>r.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
+   S.employees.map(e=>`<tr><td><button type="button" class="linkname" data-yr="${esc(e.id)}" title="ดูรายการทั้งปีของ ${esc(e.name)}">${esc(e.name)}</button></td><td>${meter(usedTotal(e.id,'holiday'),st.holidayQuota)} ${left(usedTotal(e.id,'holiday'),st.holidayQuota)}</td><td>${meter(used(e.id,'sick'),st.sickQuota)}</td><td>${meter(used(e.id,'personal'),st.personalQuota)}</td><td>${meter(used(e.id,'vacation'),st.vacationQuota)}</td><td class="n">${used(e.id,'absent')}</td><td class="n">${used(e.id,'late')}</td></tr>`).join('')}</tbody>`;
+  const view=$('r-view').value,m=$('r-month').value,fe=$('r-emp').value,yr=String(st.year);$('r-month-wrap').hidden=view==='year';
+  const keepEmp=fe;$('r-emp').innerHTML='<option value="">ทุกคน</option>'+S.employees.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');$('r-emp').value=S.employees.some(e=>e.id===keepEmp)?keepEmp:'';
+  let rows=S.records.filter(r=>(view==='year'?r.date.startsWith(yr):r.date.startsWith(m))&&(!fe||r.emp===fe));
+  if(view==='year'){const seen={};rows=rows.reduce((a,r)=>{if(!r.g){a.push(r);return a}if(seen[r.g]){seen[r.g].amount+=r.amount;return a}
+      const x={...r,date:r.gFrom||r.date,dateTo:r.gTo||r.dateTo,merged:true};seen[r.g]=x;a.push(x);return a},[]);rows.sort((a,b)=>a.date.localeCompare(b.date))}
+  else rows.sort((a,b)=>b.date.localeCompare(a.date));
+  const e1=fe&&emp(fe);$('r-yearsum').hidden=!(view==='year'&&e1);
+  if(view==='year'&&e1){const co=fixedCount(),lv=used(fe,'holiday');const box=(t,v,sub,over)=>`<div class="ys${over?' over':''}"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+    $('r-yearsum').innerHTML=box(`วันหยุดประเพณี ปี ${+st.year+543}`,`${co+lv} / ${st.holidayQuota}`,`บริษัทหยุด ${co} · ลาแทน ${lv}`,co+lv>st.holidayQuota)
+      +box('ลาป่วย',`${used(fe,'sick')} / ${st.sickQuota}`,'',used(fe,'sick')>st.sickQuota)+box('ลากิจ',`${used(fe,'personal')} / ${st.personalQuota}`,'',used(fe,'personal')>st.personalQuota)
+      +box('ลาพักร้อน',`${used(fe,'vacation')} / ${st.vacationQuota}`,'',used(fe,'vacation')>st.vacationQuota)+box('ลาไม่รับค่าจ้าง',`${used(fe,'unpaid')} วัน`)+box('ขาดงาน',`${used(fe,'absent')} วัน`)+box('มาสาย',`${used(fe,'late')} นาที`,`${S.records.filter(r=>r.emp===fe&&r.type==='late'&&r.date.startsWith(yr)).length} ครั้ง`)}
+  const label=view==='year'?`ปี ${+st.year+543}`:thMonth(m);
   $('rec-table').innerHTML=`<thead><tr><th>วันที่ลา / หยุด</th><th>พนักงาน</th><th>ประเภท</th><th class="n">จำนวน</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>${
-   rows.map(r=>`<tr><td>${rangeText(r.date,r.dateTo)}${r.g&&(r.gFrom!==r.date||r.gTo!==r.dateTo)?`<br><span class="hint">แบ่งตามงวดจ่าย · ลาทั้งช่วง ${rangeText(r.gFrom,r.gTo)}</span>`:''}</td><td>${esc(emp(r.emp)?.name||r.emp)}</td><td><span class="pill t-${r.type}">${TYPES[r.type].t}</span></td><td class="n">${r.amount} ${TYPES[r.type].u}</td><td>${esc(r.note)}${r.type==='sick'?(r.certId?` <button class="btn small" type="button" data-cert="${r.certId}">ดูใบรับรองแพทย์</button>`:` <button class="btn small" type="button" data-attach="${r.id}">แนบใบรับรอง</button>`):''}</td><td><button class="btn small danger" data-r="${r.id}">ลบ</button></td></tr>`).join('')||`<tr><td colspan="6">ไม่มีรายการใน${thMonth(m)}</td></tr>`}</tbody>`;
+   rows.map(r=>`<tr><td>${rangeText(r.date,r.dateTo)}${!r.merged&&r.g&&(r.gFrom!==r.date||r.gTo!==r.dateTo)?`<br><span class="hint">แบ่งตามงวดจ่าย · ลาทั้งช่วง ${rangeText(r.gFrom,r.gTo)}</span>`:''}</td><td>${esc(emp(r.emp)?.name||r.emp)}</td><td><span class="pill t-${r.type}">${TYPES[r.type].t}</span></td><td class="n">${Math.round(r.amount*100)/100} ${TYPES[r.type].u}</td><td>${esc(r.note)}${r.type!=='late'?(r.certId?` <button class="btn small" type="button" data-cert="${r.certId}">${r.type==='sick'?'ดูใบลา / ใบรับรองแพทย์':'ดูใบลา'}</button>`:` <button class="btn small attach" type="button" data-attach="${r.id}">แนบใบลา</button>`):''}</td><td><button class="btn small danger" data-r="${r.id}">ลบ</button></td></tr>`).join('')||`<tr><td colspan="6">ไม่มีรายการ${e1?'ของ '+esc(e1.name)+' ':''}ใน${label}</td></tr>`}</tbody>`;
+  $('quota-table').querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{$('r-view').value='year';$('r-emp').value=b.dataset.yr;renderRecords();$('rec-list').scrollIntoView({behavior:'smooth',block:'start'})});
   $('rec-table').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r0=S.records.find(r=>r.id===+b.dataset.r);if(!r0)return;
     if(r0.g&&!b.classList.contains('armed')&&S.records.filter(r=>r.g===r0.g).length>1){b.classList.add('armed');b.textContent='กดอีกครั้ง ลบทั้งช่วง';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
     S.records=S.records.filter(r=>r0.g?r.g!==r0.g:r.id!==r0.id);save();dropCert(r0.certId);renderRecords()});
   $('rec-table').querySelectorAll('[data-cert]').forEach(b=>b.onclick=()=>openCert(b.dataset.cert));
   $('rec-table').querySelectorAll('[data-attach]').forEach(b=>b.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*,application/pdf';
     inp.onchange=async()=>{const f=inp.files[0];if(!f)return;const r0=S.records.find(r=>r.id===+b.dataset.attach);if(!r0)return;b.disabled=true;b.textContent='กำลังอัปโหลด...';
-      try{const id=await saveCert(f,r0.emp);S.records.forEach(r=>{if(r.id===r0.id||(r0.g&&r.g===r0.g))r.certId=id});save();toast('แนบใบรับรองแพทย์แล้ว');renderRecords()}
-      catch(err){b.disabled=false;b.textContent='แนบใบรับรอง';toast(err.message||authMsg(err),false)}};inp.click()})}
-$('r-month').onchange=renderRecords;
+      try{const id=await saveCert(f,r0.emp);S.records.forEach(r=>{if(r.id===r0.id||(r0.g&&r.g===r0.g))r.certId=id});save();toast('แนบใบลาแล้ว');renderRecords()}
+      catch(err){b.disabled=false;b.textContent='แนบใบลา';toast(err.message||authMsg(err),false)}};inp.click()})}
+$('r-month').onchange=renderRecords;$('r-view').onchange=renderRecords;$('r-emp').onchange=renderRecords;
 $('rec-form').onsubmit=async ev=>{ev.preventDefault();const ids=[...picks.rec];const msg=$('r-msg');
   if(!ids.length)return flash(msg,'ติ๊กเลือกพนักงานอย่างน้อย 1 คนก่อนบันทึก',false);
   const type=$('r-type').value,date=$('r-date').value,amount=+$('r-amt').value,dateTo=(type!=='late'&&$('r-to').value)||date;
@@ -621,7 +648,7 @@ $('rec-form').onsubmit=async ev=>{ev.preventDefault();const ids=[...picks.rec];c
     if(!workDaysIn(date,dateTo).length&&type!=='absent')return flash(msg,'ช่วงวันที่เลือกเป็นวันหยุดทั้งหมด ไม่ต้องบันทึก',false)}
   else if(type==='holiday'){if(isOffDay(date))return flash(msg,'วันที่เลือกเป็นวันหยุดประจำสัปดาห์อยู่แล้ว ไม่ต้องใช้โควตา',false);
     if(isCoHoliday(date))return flash(msg,'วันนี้เป็นวันหยุดบังคับของบริษัทอยู่แล้ว',false)}
-  const certFile=type==='sick'?$('r-cert').files[0]:null;if(certFile&&ids.length>1)return flash(msg,'แนบใบรับรองแพทย์ได้ทีละคน ให้เลือกพนักงานคนเดียว',false);
+  const certFile=type!=='late'?$('r-cert').files[0]:null;if(certFile&&ids.length>1)return flash(msg,'แนบใบลาได้ทีละคน ให้เลือกพนักงานคนเดียว',false);
   const q=quotaOf(type);if(q!=null){const over=ids.filter(id=>usedTotal(id,type)+amount>q).map(id=>emp(id).name);
     if(over.length)return flash(msg,`โควตา${TYPES[type].t}ไม่พอ: ${over.join(', ')}`,false)}
   // a range is split at the 15th and at month end, so each pay period gets its own days
@@ -629,7 +656,7 @@ $('rec-form').onsubmit=async ev=>{ev.preventDefault();const ids=[...picks.rec];c
   if(dateTo!==date){const parts=[];daysBetween(date,dateTo).forEach(d=>{const k=d.slice(0,7)+(+d.slice(8)<=15?'a':'b');let P=parts.find(x=>x.k===k);if(!P){P={k,days:[]};parts.push(P)}P.days.push(d)});
     let left=amount;segs=parts.map((P,i)=>{const auto=P.days.filter(d=>!isOffDay(d)&&!isCoHoliday(d)).length;const a=i===parts.length-1?left:Math.min(auto,left);left=Math.round((left-a)*100)/100;
       return {date:P.days[0],dateTo:P.days[P.days.length-1],amount:a}}).filter(x=>x.amount>0);if(!segs.length)segs=[{date,dateTo,amount}]}
-  let certId;if(certFile){const btn=ev.target.querySelector('button[type=submit]');btn.disabled=true;flash(msg,'กำลังอัปโหลดใบรับรองแพทย์...');
+  let certId;if(certFile){const btn=ev.target.querySelector('button[type=submit]');btn.disabled=true;flash(msg,'กำลังอัปโหลดใบลา...');
     try{certId=await saveCert(certFile,ids[0])}catch(err){btn.disabled=false;return flash(msg,err.message||authMsg(err),false)}btn.disabled=false}
   const note=$('r-note').value.trim();let nid=Math.max(0,...S.records.map(r=>r.id))+1;
   ids.forEach(id=>{const g=segs.length>1||dateTo!==date?newGroupId():undefined;
