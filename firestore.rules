@@ -3,6 +3,7 @@ rules_version = '2';
 // กฎความปลอดภัยของฐานข้อมูลระบบ HR: คัดลอกไฟล์นี้ทั้งหมดไปวางที่ Firebase Console > Firestore Database > Rules แล้วกด Publish
 // - ผู้ดูแลระบบ (owner): เห็นและแก้ไขได้ทุกอย่าง สร้างและปิดบัญชี HR ได้ ลบบริษัทได้
 // - เจ้าหน้าที่ HR (hr): เพิ่มบริษัท กรอกพนักงาน การลา เงินเดือน และพิมพ์สลิปได้ แต่ลบบริษัทและจัดการบัญชีไม่ได้
+// - ใบรับรองแพทย์ที่แนบ: เฉพาะบัญชี HR เท่านั้นที่เปิดดูได้
 // - คนที่ไม่มีบัญชี: ไม่เห็นข้อมูลใดๆ เลย
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -38,6 +39,13 @@ service cloud.firestore {
     match /companies/{id} {
       allow read, create, update: if isHR();
       allow delete: if isOwner();
+    }
+
+    // scanned medical certificates (compressed image or small PDF), readable only by HR accounts
+    match /files/{id} {
+      allow read, delete: if isHR();
+      allow create: if isHR() && request.resource.data.data is string && request.resource.data.data.size() < 1000000;
+      allow update: if false;
     }
   }
 }
