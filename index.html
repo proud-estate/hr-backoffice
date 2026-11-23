@@ -490,18 +490,15 @@ $('emp-form').onsubmit=ev=>{ev.preventDefault();const id=$('e-id').value.trim();
 /* ---------- holidays & settings ---------- */
 const sMap={co:'company',year:'year',hq:'holidayQuota',sick:'sickQuota',pers:'personalQuota',vac:'vacationQuota',sso:'ssoRate',cap:'ssoCap',wd:'workDays'};
 const fixedThisYear=()=>S.holidays.filter(h=>h.date.startsWith(String(st.year)));
-// Thai public holidays. 2026: government list (cabinet) + Labour Day. 2027: media-compiled calendar, pending official announcement.
-const PUB={2026:{official:true,list:[
- ['01-01','วันขึ้นปีใหม่'],['01-02','วันหยุดพิเศษ (ครม.)'],['03-03','วันมาฆบูชา'],['04-06','วันจักรี'],['04-13','วันสงกรานต์'],['04-14','วันสงกรานต์'],['04-15','วันสงกรานต์'],
- ['05-01','วันแรงงานแห่งชาติ'],['05-04','วันฉัตรมงคล'],['05-09','วันพืชมงคล (หยุดเฉพาะราชการ)'],['05-31','วันวิสาขบูชา'],['06-01','ชดเชยวันวิสาขบูชา'],
- ['06-03','วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี'],['07-28','วันเฉลิมพระชนมพรรษา ร.10'],['07-29','วันอาสาฬหบูชา'],['07-30','วันเข้าพรรษา'],['08-12','วันแม่แห่งชาติ'],
- ['10-13','วันนวมินทรมหาราช'],['10-23','วันปิยมหาราช'],['12-05','วันพ่อแห่งชาติ'],['12-07','ชดเชยวันพ่อแห่งชาติ'],['12-10','วันรัฐธรรมนูญ'],['12-31','วันสิ้นปี']]},
- 2027:{official:false,list:[
- ['01-01','วันขึ้นปีใหม่'],['02-21','วันมาฆบูชา'],['02-22','ชดเชยวันมาฆบูชา'],['04-06','วันจักรี'],['04-13','วันสงกรานต์'],['04-14','วันสงกรานต์'],['04-15','วันสงกรานต์'],
- ['05-01','วันแรงงานแห่งชาติ'],['05-03','ชดเชยวันแรงงานแห่งชาติ'],['05-04','วันฉัตรมงคล'],['05-20','วันวิสาขบูชา'],['06-03','วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี'],
- ['07-18','วันอาสาฬหบูชา'],['07-19','วันเข้าพรรษา'],['07-28','วันเฉลิมพระชนมพรรษา ร.10'],['08-12','วันแม่แห่งชาติ'],['10-13','วันนวมินทรมหาราช'],['10-23','วันปิยมหาราช'],
- ['10-25','ชดเชยวันปิยมหาราช'],['12-05','วันพ่อแห่งชาติ'],['12-06','ชดเชยวันพ่อแห่งชาติ'],['12-10','วันรัฐธรรมนูญ'],['12-31','วันสิ้นปี']]}};
-const pubList=()=>{const P=PUB[+st.year];return P?P.list.map(([md,name])=>({date:st.year+'-'+md,name})):[]};
+// The 13 core traditional holidays the company uses each year. A core day that falls on a weekly day off gets a substitute on the next working day (labour law), so the total stays 13 working days.
+const PUB={2026:{official:true,list:[['01-01','วันขึ้นปีใหม่'],['03-03','วันมาฆบูชา'],['04-06','วันจักรี'],['04-13','วันสงกรานต์'],['04-14','วันสงกรานต์'],['04-15','วันสงกรานต์'],
+   ['05-01','วันแรงงานแห่งชาติ'],['05-31','วันวิสาขบูชา'],['07-29','วันอาสาฬหบูชา'],['08-12','วันแม่แห่งชาติ'],['10-23','วันปิยมหาราช'],['12-05','วันพ่อแห่งชาติ'],['12-31','วันสิ้นปี']]},
+ 2027:{official:false,list:[['01-01','วันขึ้นปีใหม่'],['02-21','วันมาฆบูชา'],['04-06','วันจักรี'],['04-13','วันสงกรานต์'],['04-14','วันสงกรานต์'],['04-15','วันสงกรานต์'],
+   ['05-01','วันแรงงานแห่งชาติ'],['05-20','วันวิสาขบูชา'],['07-18','วันอาสาฬหบูชา'],['08-12','วันแม่แห่งชาติ'],['10-23','วันปิยมหาราช'],['12-05','วันพ่อแห่งชาติ'],['12-31','วันสิ้นปี']]}};
+function pubList(){const P=PUB[+st.year];if(!P)return [];const core=P.list.map(([md,name])=>({date:st.year+'-'+md,name}));const taken=new Set(core.map(x=>x.date));const out=[];
+  core.forEach(x=>{out.push(x);if(!isOffDay(x.date))return;const d=new Date(x.date+'T00:00:00');
+    for(let k=0;k<10;k++){d.setDate(d.getDate()+1);const ds=isoD(d);if(!isOffDay(ds)&&!taken.has(ds)){taken.add(ds);out.push({date:ds,name:'ชดเชย'+x.name,sub:true});break}}});
+  return out.sort((a,b)=>a.date.localeCompare(b.date))}
 const fixedCount=()=>fixedThisYear().filter(h=>!isOffDay(h.date)).length;
 const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 function daysBetween(a,b){const out=[];const d=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');while(d<=e&&out.length<400){out.push(isoD(d));d.setDate(d.getDate()+1)}return out}
@@ -512,18 +509,21 @@ const rangeText=(a,b)=>!b||a===b?thDate(a):thDate(a)+' – '+thDate(b);
 const newGroupId=()=>'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function renderHolidays(){Object.entries(sMap).forEach(([k,v])=>$('s-'+k).value=st[v]);
   const pubs=pubList(),pubDates=new Set(pubs.map(x=>x.date)),P=PUB[+st.year];
+  const initKey='pub13_'+st.year;
+  if(P&&!st[initKey]){S.holidays=S.holidays.filter(h=>!(h.pub&&h.date.startsWith(String(st.year))&&!pubDates.has(h.date)));
+    pubs.forEach(x=>{if(!isCoHoliday(x.date))S.holidays.push({date:x.date,name:x.name,pub:true})});st[initKey]=true;save()}
   const f=fixedThisYear().filter(h=>!pubDates.has(h.date)).sort((a,b)=>a.date.localeCompare(b.date));
   const fc=fixedCount();
   $('hol-summary').textContent=`ปี ${+st.year+543}: โควตาวันหยุดประเพณี ${st.holidayQuota} วัน · บริษัทหยุดแล้ว ${fc} วัน · พนักงานใช้ลาแทนวันนักขัตฤกษ์ได้อีกคนละ ${Math.max(0,st.holidayQuota-fc)} วัน`;
-  $('pub-title').textContent=`วันหยุดนักขัตฤกษ์ ปี ${+st.year+543}`+(P&&!P.official?' (รอประกาศทางการ)':'');
+  $('pub-title').textContent=`วันหยุดประจำปี 13 วัน ปี ${+st.year+543}`+(P&&!P.official?' (รอประกาศทางการ)':'');
   $('pub-hint').textContent=!P?`ระบบยังไม่มีรายการวันหยุดของปี ${+st.year+543} ใส่วันหยุดเองในหัวข้อวันหยุดเพิ่มเติมด้านล่าง`
-    :'ติ๊กวันที่บริษัทหยุด วันที่ไม่ติ๊ก พนักงานมาทำงานตามปกติ และใช้โควตาวันหยุดประเพณีลาแทนได้'+(P.official?'':' · รายการปีนี้รวบรวมจากปฏิทินที่สื่อเผยแพร่ ตรวจสอบกับประกาศทางการอีกครั้ง');
+    :'วันหยุดหลัก 13 วัน ติ๊กหยุดไว้ให้แล้ว ถ้าบริษัทไม่หยุดวันไหนให้เอาติ๊กออก พนักงานจะใช้โควตาวันหยุดประเพณีลาแทนได้ วันที่ตรงวันหยุดประจำสัปดาห์ระบบใส่วันชดเชยให้'+(P.official?'':' · ปีนี้รอประกาศทางการ ตรวจสอบวันที่อีกครั้ง');
   $('pub-all').hidden=$('pub-none').hidden=!pubs.length;
   const wdn=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short'});
   const may1=st.year+'-05-01';
   $('pub-table').innerHTML=pubs.length?`<thead><tr><th>บริษัทหยุด</th><th>วันที่</th><th>วัน</th><th>ชื่อวันหยุด</th><th>หมายเหตุ</th></tr></thead><tbody>${pubs.map(x=>{const on=isCoHoliday(x.date),off=isOffDay(x.date);
      return `<tr><td><label class="pubchk"><input type="checkbox" data-pub="${x.date}" ${on?'checked':''} aria-label="บริษัทหยุด ${esc(x.name)}"><span>${on?'หยุด':'ทำงาน'}</span></label></td><td>${thDate(x.date)}</td><td>${wdn(x.date)}</td><td>${esc(x.name)}</td>
-     <td>${off?'<span class="pill">ตรงวันหยุดประจำสัปดาห์ ไม่นับโควตา</span>':''}${x.date===may1&&!on?'<span class="pill t-late">กฎหมายแรงงานกำหนดให้หยุดวันนี้</span>':''}</td></tr>`}).join('')}</tbody>`:'';
+     <td>${off?'<span class="pill">ตรงวันหยุดประจำสัปดาห์ ไม่นับโควตา</span>':''}${x.sub?'<span class="pill t-holiday">วันหยุดชดเชย</span>':''}${x.date===may1&&!on?'<span class="pill t-late">กฎหมายแรงงานกำหนดให้หยุดวันนี้</span>':''}</td></tr>`}).join('')}</tbody>`:'';
   $('pub-table').querySelectorAll('[data-pub]').forEach(c=>c.onchange=()=>{const d=c.dataset.pub,x=pubs.find(y=>y.date===d);
     if(c.checked){if(!isCoHoliday(d))S.holidays.push({date:d,name:x.name,pub:true})}else S.holidays=S.holidays.filter(h=>h.date!==d);
     save();renderHolidays()});
