@@ -79,6 +79,12 @@ header.top .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:12p
 .yearsum .ys small{font-size:.75rem;color:var(--muted)}
 .linkname{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
 .btn.attach{border-style:dashed;color:var(--muted)}
+.forchips{display:flex;flex-wrap:wrap;gap:6px}
+.forchips label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.85rem;cursor:pointer;background:var(--bg);color:var(--fg)}
+.forchips label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.forchips input{accent-color:var(--accent);width:16px;height:16px;padding:0;flex:none}
+.forchips label.usedup{opacity:.55}
+.forchips .none{color:var(--muted);font-size:.85rem}
 .sample{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{font:500 .92rem var(--f-body);background:none;border:0;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -262,7 +268,7 @@ td input.note-in{width:170px;text-align:left}
 
 <!-- วันหยุด -->
 <section class="panel" id="tab-holidays" hidden>
-  <div><h2>ตั้งค่าวันหยุดและโควตาการลา</h2><p class="hint">พนักงานมีวันหยุดประเพณีปีละ 13 วัน วันนักขัตฤกษ์ที่บริษัทเลือกหยุดจะหักจากโควตานี้ วันที่เหลือพนักงานใช้ลาแทนวันนักขัตฤกษ์ที่บริษัทไม่ได้หยุด</p></div>
+  <div><h2>ตั้งค่าวันหยุดและโควตาการลา</h2><p class="hint">พนักงานมีวันหยุดประเพณีตามโควตาที่ตั้งไว้ (ปีละ 15 วัน) วันนักขัตฤกษ์ที่บริษัทเลือกหยุดจะหักจากโควตานี้ วันที่เหลือพนักงานใช้ลาแทนวันนักขัตฤกษ์ที่บริษัทไม่ได้หยุด</p></div>
   <div class="grid">
     <label class="f">ชื่อบริษัท<input id="s-co"></label>
     <label class="f">ปี (ค.ศ.)<input id="s-year" type="number"></label>
@@ -272,22 +278,22 @@ td input.note-in{width:170px;text-align:left}
     <label class="f">ลาพักร้อน / ปี<input id="s-vac" type="number" min="0"></label>
     <label class="f">ประกันสังคม (%)<input id="s-sso" type="number" step="0.1" min="0"></label>
     <label class="f">ฐานเงินเดือนสูงสุดประกันสังคม<input id="s-cap" type="number" min="0"></label>
-    <label class="f">วันทำงานต่อสัปดาห์<select id="s-wd"><option value="5">จันทร์–ศุกร์ (5 วัน)</option><option value="6">จันทร์–เสาร์ (6 วัน)</option></select></label>
+    <label class="f">วันทำงานต่อสัปดาห์<select id="s-wd"><option value="6">จันทร์–เสาร์ (6 วัน)</option><option value="5">จันทร์–ศุกร์ (5 วัน)</option></select></label>
   </div>
   <p class="hint">ตรวจสอบอัตราและเพดานประกันสังคมล่าสุดกับสำนักงานประกันสังคมก่อนใช้งานจริง</p>
   <div id="hol-summary" class="msg ok"></div>
   <div class="row"><div style="flex:1 1 260px"><h3 id="pub-title">วันหยุดนักขัตฤกษ์</h3><p class="hint" id="pub-hint">ติ๊กวันที่บริษัทหยุด วันที่ไม่ติ๊ก พนักงานมาทำงานตามปกติ และใช้โควตาวันหยุดประเพณีลาแทนได้</p></div>
     <div class="row"><button class="btn small" type="button" id="pub-all">ติ๊กทั้งหมด</button><button class="btn small" type="button" id="pub-none">ล้าง</button></div></div>
   <div class="tbl"><table id="pub-table"></table></div>
-  <h3>วันหยุดเพิ่มเติมของบริษัท</h3>
-  <p class="hint">วันหยุดอื่นที่ไม่อยู่ในรายการด้านบน เช่น วันหยุดพิเศษของบริษัท หรือวันหยุดชดเชยเพิ่มเติม</p>
+  <h3>เพิ่มวันหยุดของบริษัท</h3>
+  <p class="hint">วันหยุดที่ไม่อยู่ในตารางด้านบน เช่น หยุดต่อปีใหม่ 2–3 ม.ค. เพิ่มแล้วจะแสดงในตารางวันหยุดประจำปีด้านบน และหักโควตาวันหยุดประเพณี</p>
   <form id="hol-form" class="row">
     <label class="f" style="flex:1 1 150px">ตั้งแต่วันที่<input id="h-date" type="date" required></label>
     <label class="f" style="flex:1 1 150px">ถึงวันที่ (หยุดวันเดียวไม่ต้องใส่)<input id="h-to" type="date"></label>
-    <label class="f" style="flex:2 1 200px">ชื่อวันหยุด<input id="h-name" required placeholder="เช่น วันสงกรานต์"></label>
+    <label class="f" style="flex:2 1 200px">ชื่อวันหยุด<input id="h-name" required placeholder="เช่น วันหยุดพิเศษปีใหม่"></label>
+    <label class="chk" style="flex:1 1 200px"><input id="h-quota" type="checkbox" checked><span>หักโควตาวันหยุดประเพณี<small>เอาติ๊กออก ถ้าเป็นวันหยุดพิเศษที่บริษัทให้เพิ่ม</small></span></label>
     <button class="btn primary" type="submit">เพิ่มวันหยุด</button>
   </form>
-  <div class="tbl"><table id="hol-table"></table></div>
   <div class="row"><button class="btn danger" id="del-co-btn" type="button">ลบบริษัทนี้</button><button class="btn danger" id="reset-btn" type="button">ล้างข้อมูลทุกบริษัท</button></div>
 </section>
 
@@ -301,6 +307,7 @@ td input.note-in{width:170px;text-align:left}
     <label class="f" id="r-to-wrap">ถึงวันที่ (ลาวันเดียวไม่ต้องใส่)<input id="r-to" type="date"></label>
     <label class="f"><span id="r-amt-label">จำนวนวัน</span><input id="r-amt" type="number" min="0.5" step="0.5" value="1" required></label>
     <label class="f">หมายเหตุ<input id="r-note"></label>
+    <div class="f" id="r-for-wrap" style="grid-column:1/-1"><span>ใช้แทนวันนักขัตฤกษ์ (ติ๊กวันหยุดที่บริษัทไม่ได้หยุด ที่พนักงานใช้วันลานี้แทน)</span><div class="forchips" id="r-for"></div></div>
     <label class="f" id="r-cert-wrap" style="grid-column:1/-1"><span id="r-cert-label">แนบใบลา (สแกนหรือถ่ายรูป หรือไฟล์ PDF ไม่เกิน 700 KB) ไม่บังคับ</span><input id="r-cert" type="file" accept="image/*,application/pdf"></label>
     <p class="hint" id="r-cert-hint" style="grid-column:1/-1">แนบตอนนี้ หรือกดปุ่มแนบในรายการที่บันทึกภายหลังก็ได้ แนบได้ทีละคน รูปจะถูกย่อขนาดให้อัตโนมัติ</p>
     <p class="hint" id="r-hint" style="grid-column:1/-1">ใส่ช่วงวันที่แล้ว ระบบจะนับจำนวนวันทำงานให้ (ไม่นับวันหยุดประจำสัปดาห์และวันหยุดบริษัท) แก้จำนวนเองได้ เช่น ลาครึ่งวันใส่ 0.5</p>
@@ -380,8 +387,8 @@ td input.note-in{width:170px;text-align:left}
 const KEY='hr-payroll-v2';
 const TYPES={holiday:{t:'วันหยุดประเพณี',u:'วัน'},sick:{t:'ลาป่วย',u:'วัน'},personal:{t:'ลากิจ',u:'วัน'},vacation:{t:'ลาพักร้อน',u:'วัน'},unpaid:{t:'ลาไม่รับค่าจ้าง',u:'วัน'},absent:{t:'ขาดงาน',u:'วัน'},late:{t:'มาสาย',u:'นาที'}};
 const now=new Date(); const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-const DEFAULT_SETTINGS=()=>({company:'',year:now.getFullYear(),holidayQuota:13,sickQuota:30,personalQuota:3,vacationQuota:6,ssoRate:5,ssoCap:15000,workDays:5});
-const newCompany=(id,name)=>({id,settings:{...DEFAULT_SETTINGS(),company:name,qv:2},employees:[],holidays:[],records:[],extra:{}});
+const DEFAULT_SETTINGS=()=>({company:'',year:now.getFullYear(),holidayQuota:15,sickQuota:30,personalQuota:3,vacationQuota:6,ssoRate:5,ssoCap:15000,workDays:6});
+const newCompany=(id,name)=>({id,settings:{...DEFAULT_SETTINGS(),company:name,qv:4},employees:[],holidays:[],records:[],extra:{}});
 const EMPTY=()=>({current:null,companies:[]});
 /* ---------- data layer: Firebase when config.js is filled in, otherwise demo mode in this browser ---------- */
 const FB=window.FIREBASE_CONFIG||null;
@@ -398,6 +405,8 @@ const localSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 function setSync(st,txt){const el=$('sync');if(!el)return;el.dataset.s=st;el.textContent=txt||{ok:'ซิงก์แล้ว',pending:'กำลังบันทึก...',err:'บันทึกไม่สำเร็จ',demo:'โหมดทดลอง'}[st]}
 function normCompany(id,d){d=d||{};const x=d.data||{};const st0={...DEFAULT_SETTINGS(),...(x.settings||{}),company:d.name||(x.settings||{}).company||''};
   if(!st0.qv){if(st0.personalQuota===6)st0.personalQuota=3;st0.qv=2}
+  if(st0.qv<3){st0.workDays=6;st0.qv=3}
+  if(st0.qv<4){if(st0.holidayQuota===13)st0.holidayQuota=15;st0.qv=4}
   return {id,settings:st0,
   employees:x.employees||[],holidays:x.holidays||[],records:x.records||[],extra:x.extra||{}}}
 const rowData=c=>({settings:c.settings,employees:c.employees,holidays:c.holidays,records:c.records,extra:c.extra});
@@ -512,7 +521,7 @@ function pubList(){const P=PUB[+st.year];if(!P)return [];const core=P.list.map((
   core.forEach(x=>{out.push(x);if(!isOffDay(x.date))return;const d=new Date(x.date+'T00:00:00');
     for(let k=0;k<10;k++){d.setDate(d.getDate()+1);const ds=isoD(d);if(!isOffDay(ds)&&!taken.has(ds)){taken.add(ds);out.push({date:ds,name:'ชดเชย'+x.name,sub:true});break}}});
   return out.sort((a,b)=>a.date.localeCompare(b.date))}
-const fixedCount=()=>fixedThisYear().filter(h=>!isOffDay(h.date)).length;
+const fixedCount=()=>fixedThisYear().filter(h=>!isOffDay(h.date)&&!h.noQuota).length;
 const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 function daysBetween(a,b){const out=[];const d=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');while(d<=e&&out.length<400){out.push(isoD(d));d.setDate(d.getDate()+1)}return out}
 const isOffDay=ds=>{const g=new Date(ds+'T00:00:00').getDay();return g===0||(g===6&&+(st.workDays||5)!==6)};
@@ -525,26 +534,28 @@ function renderHolidays(){Object.entries(sMap).forEach(([k,v])=>$('s-'+k).value=
   const initKey='pub13_'+st.year;
   if(P&&!st[initKey]){S.holidays=S.holidays.filter(h=>!(h.pub&&h.date.startsWith(String(st.year))&&!pubDates.has(h.date)));
     pubs.forEach(x=>{if(!isCoHoliday(x.date))S.holidays.push({date:x.date,name:x.name,pub:true})});st[initKey]=true;save()}
+  if(P){let ch=false;const yr0=String(st.year);const before=S.holidays.length;
+    S.holidays=S.holidays.filter(h=>!(h.pub&&h.date.startsWith(yr0)&&!pubDates.has(h.date)));if(S.holidays.length!==before)ch=true;
+    if(st.subSync!==+st.workDays){st.subSync=+st.workDays;ch=true;pubs.filter(x=>x.sub&&!isCoHoliday(x.date)).forEach(x=>{const core=pubs.find(y=>!y.sub&&'ชดเชย'+y.name===x.name&&y.date<x.date);if(core&&isCoHoliday(core.date)){S.holidays.push({date:x.date,name:x.name,pub:true})}})}
+    if(ch)save()}
   const f=fixedThisYear().filter(h=>!pubDates.has(h.date)).sort((a,b)=>a.date.localeCompare(b.date));
-  const fc=fixedCount();
-  $('hol-summary').textContent=`ปี ${+st.year+543}: โควตาวันหยุดประเพณี ${st.holidayQuota} วัน · บริษัทหยุดแล้ว ${fc} วัน · พนักงานใช้ลาแทนวันนักขัตฤกษ์ได้อีกคนละ ${Math.max(0,st.holidayQuota-fc)} วัน`;
-  $('pub-title').textContent=`วันหยุดประจำปี 13 วัน ปี ${+st.year+543}`+(P&&!P.official?' (รอประกาศทางการ)':'');
-  $('pub-hint').textContent=!P?`ระบบยังไม่มีรายการวันหยุดของปี ${+st.year+543} ใส่วันหยุดเองในหัวข้อวันหยุดเพิ่มเติมด้านล่าง`
-    :'วันหยุดหลัก 13 วัน ติ๊กหยุดไว้ให้แล้ว ถ้าบริษัทไม่หยุดวันไหนให้เอาติ๊กออก พนักงานจะใช้โควตาวันหยุดประเพณีลาแทนได้ วันที่ตรงวันหยุดประจำสัปดาห์ระบบใส่วันชดเชยให้'+(P.official?'':' · ปีนี้รอประกาศทางการ ตรวจสอบวันที่อีกครั้ง');
+  const fc=fixedCount(),nqDays=fixedThisYear().filter(h=>h.noQuota&&!isOffDay(h.date)).length;
+  $('hol-summary').textContent=`ปี ${+st.year+543}: โควตาวันหยุดประเพณี ${st.holidayQuota} วัน · บริษัทหยุดแล้ว ${fc} วัน${nqDays?` (ไม่รวมวันหยุดพิเศษ ${nqDays} วัน)`:''} · พนักงานใช้ลาแทนวันนักขัตฤกษ์ได้อีกคนละ ${Math.max(0,st.holidayQuota-fc)} วัน`;
+  $('pub-title').textContent=`วันหยุดประจำปี ${+st.year+543}`+(P&&!P.official?' (รอประกาศทางการ)':'');
+  $('pub-hint').textContent=(P?'ติ๊กวันที่บริษัทหยุด วันที่ไม่ติ๊ก พนักงานมาทำงานและใช้โควตาวันหยุดประเพณีลาแทนได้ วันที่บริษัทเพิ่มเองจะแสดงในตารางนี้ด้วย':`ระบบยังไม่มีรายการวันหยุดนักขัตฤกษ์ของปี ${+st.year+543} เพิ่มวันหยุดของบริษัทได้ด้านล่าง`)+(P&&!P.official?' · ปีนี้รอประกาศทางการ ตรวจสอบวันที่อีกครั้ง':'');
   $('pub-all').hidden=$('pub-none').hidden=!pubs.length;
   const wdn=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short'});
   const may1=st.year+'-05-01';
-  $('pub-table').innerHTML=pubs.length?`<thead><tr><th>บริษัทหยุด</th><th>วันที่</th><th>วัน</th><th>ชื่อวันหยุด</th><th>หมายเหตุ</th></tr></thead><tbody>${pubs.map(x=>{const on=isCoHoliday(x.date),off=isOffDay(x.date);
-     return `<tr><td><label class="pubchk"><input type="checkbox" data-pub="${x.date}" ${on?'checked':''} aria-label="บริษัทหยุด ${esc(x.name)}"><span>${on?'หยุด':'ทำงาน'}</span></label></td><td>${thDate(x.date)}</td><td>${wdn(x.date)}</td><td>${esc(x.name)}</td>
-     <td>${off?'<span class="pill">ตรงวันหยุดประจำสัปดาห์ ไม่นับโควตา</span>':''}${x.sub?'<span class="pill t-holiday">วันหยุดชดเชย</span>':''}${x.date===may1&&!on?'<span class="pill t-late">กฎหมายแรงงานกำหนดให้หยุดวันนี้</span>':''}</td></tr>`}).join('')}</tbody>`:'';
+  const rowsH=[...pubs.map(x=>({...x,on:isCoHoliday(x.date)})),...f.map(h=>({date:h.date,name:h.name,custom:true,on:true,nq:!!h.noQuota}))].sort((a,b)=>a.date.localeCompare(b.date));
+  $('pub-table').innerHTML=rowsH.length?`<thead><tr><th>บริษัทหยุด</th><th>วันที่</th><th>วัน</th><th>ชื่อวันหยุด</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>${rowsH.map(x=>{const off=isOffDay(x.date);
+     return `<tr><td><label class="pubchk"><input type="checkbox" ${x.custom?`data-cust="${x.date}"`:`data-pub="${x.date}"`} ${x.on?'checked':''} aria-label="บริษัทหยุด ${esc(x.name)}"><span>${x.on?'หยุด':'ทำงาน'}</span></label></td><td>${thDate(x.date)}</td><td>${wdn(x.date)}</td><td>${esc(x.name)}</td>
+     <td>${x.custom?'<span class="pill t-holiday">บริษัทเพิ่ม</span> ':''}${off?'<span class="pill">ตรงวันหยุดประจำสัปดาห์ ไม่นับโควตา</span>':''}${x.sub?'<span class="pill t-holiday">วันหยุดชดเชย</span>':''}${x.custom&&!off?`<label class="pubchk"><input type="checkbox" data-q="${x.date}" ${x.nq?'':'checked'}><span>${x.nq?'ไม่หักโควตา':'หักโควตา'}</span></label>`:''}${x.date===may1&&!x.on?'<span class="pill t-late">กฎหมายแรงงานกำหนดให้หยุดวันนี้</span>':''}</td>
+     <td>${x.custom?`<button class="btn small danger" type="button" data-del="${x.date}">ลบ</button>`:''}</td></tr>`}).join('')}</tbody>`:'';
   $('pub-table').querySelectorAll('[data-pub]').forEach(c=>c.onchange=()=>{const d=c.dataset.pub,x=pubs.find(y=>y.date===d);
     if(c.checked){if(!isCoHoliday(d))S.holidays.push({date:d,name:x.name,pub:true})}else S.holidays=S.holidays.filter(h=>h.date!==d);
     save();renderHolidays()});
-  const groups=[];f.forEach(h=>{const k=h.g||h.date;let G=groups.find(x=>x.k===k);if(!G){G={k,name:h.name,days:[]};groups.push(G)}G.days.push(h.date)});
-  const wd=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short'});
-  $('hol-table').innerHTML=`<thead><tr><th>ช่วงวันที่</th><th>วัน</th><th class="n">จำนวน</th><th>ชื่อวันหยุด</th><th></th></tr></thead><tbody>${groups.map(G=>{const a=G.days[0],b=G.days[G.days.length-1];const off=G.days.filter(isOffDay).length;
-   return `<tr><td>${rangeText(a,b)}</td><td>${a===b?wd(a):wd(a)+' – '+wd(b)}${off?` <span class="pill t-late">${off===1&&a===b?'ตรงวันหยุดประจำสัปดาห์':'มี '+off+' วันตรงวันหยุดประจำสัปดาห์'} ต้องหยุดชดเชย</span>`:''}</td><td class="n">${G.days.length} วัน</td><td>${esc(G.name)}</td><td><button class="btn small danger" data-k="${esc(G.k)}">ลบ</button></td></tr>`}).join('')||'<tr><td colspan="5">ยังไม่มีวันหยุดเพิ่มเติม</td></tr>'}</tbody>`;
-  $('hol-table').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{S.holidays=S.holidays.filter(h=>(h.g||h.date)!==b.dataset.k);save();renderHolidays()})}
+  $('pub-table').querySelectorAll('[data-cust],[data-del]').forEach(c=>{const fn=()=>{const d=c.dataset.cust||c.dataset.del;S.holidays=S.holidays.filter(h=>h.date!==d);save();renderHolidays()};if(c.dataset.cust)c.onchange=fn;else c.onclick=fn});
+  $('pub-table').querySelectorAll('[data-q]').forEach(c=>c.onchange=()=>{S.holidays.forEach(h=>{if(h.date===c.dataset.q){if(c.checked)delete h.noQuota;else h.noQuota=true}});save();renderHolidays()})}
 Object.entries(sMap).forEach(([k,v])=>$('s-'+k).onchange=e=>{st[v]=k==='co'?e.target.value:+e.target.value;save();$('co-name').textContent=st.company;renderCoBar();renderHolidays()});
 $('pub-all').onclick=()=>{pubList().forEach(x=>{if(!isCoHoliday(x.date))S.holidays.push({date:x.date,name:x.name,pub:true})});save();renderHolidays()};
 $('pub-none').onclick=()=>{const ds=new Set(pubList().map(x=>x.date));S.holidays=S.holidays.filter(h=>!(ds.has(h.date)));save();renderHolidays()};
@@ -552,8 +563,8 @@ $('hol-form').onsubmit=ev=>{ev.preventDefault();const a=$('h-date').value,b=$('h
   if(b<a)return toast('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม',false);
   const days=daysBetween(a,b);if(days.length>60)return toast('ช่วงวันหยุดยาวเกิน 60 วัน ตรวจสอบวันที่อีกครั้ง',false);
   const fresh=days.filter(d=>!isCoHoliday(d));if(!fresh.length)return toast('วันที่เลือกเป็นวันหยุดบริษัทอยู่แล้วทั้งหมด',false);
-  const g=fresh.length>1?newGroupId():undefined;fresh.forEach(d=>S.holidays.push(g?{date:d,name,g}:{date:d,name}));
-  save();ev.target.reset();renderHolidays();if(fresh.length<days.length)toast(`เพิ่ม ${fresh.length} วัน (ข้ามวันที่เป็นวันหยุดอยู่แล้ว ${days.length-fresh.length} วัน)`)};
+  const g=fresh.length>1?newGroupId():undefined,nq=!$('h-quota').checked;fresh.forEach(d=>{const h={date:d,name};if(g)h.g=g;if(nq)h.noQuota=true;S.holidays.push(h)});
+  save();ev.target.reset();$('h-quota').checked=true;renderHolidays();if(fresh.length<days.length)toast(`เพิ่ม ${fresh.length} วัน (ข้ามวันที่เป็นวันหยุดอยู่แล้ว ${days.length-fresh.length} วัน)`)};
 $('reset-btn').onclick=async e=>{const b=e.target;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='กดอีกครั้งเพื่อยืนยัน ข้อมูลทุกบริษัทจะหายถาวร';setTimeout(()=>{b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท'},4000);return}
   b.classList.remove('armed');b.textContent='ล้างข้อมูลทุกบริษัท';if(ME.role!=='owner')return toast('เฉพาะผู้ดูแลระบบล้างข้อมูลได้',false);
   try{await flush();for(const c of [...ROOT.companies])await deleteCompanyDoc(c.id)}catch(err){return toast('ล้างข้อมูลไม่สำเร็จ: '+authMsg(err),false)}
@@ -580,7 +591,17 @@ $('co-add').onsubmit=async ev=>{ev.preventDefault();const name=$('co-new').value
   $('co-add').hidden=true;$('co-add').reset();switchCompany(c.id);show('employees')};
 
 /* ---------- records ---------- */
-function used(id,type,year=st.year){return S.records.filter(r=>r.emp===id&&r.type===type&&r.date.startsWith(String(year))).reduce((a,r)=>a+r.amount,0)}
+// days that fall on a weekly day off or a company holiday are not counted as leave
+function effAmt(r){if(r.type==='late')return r.amount;const a=r.date,b=r.dateTo||r.date;
+  if(a===b)return (isOffDay(a)||isCoHoliday(a))?0:r.amount;return Math.min(r.amount,workDaysIn(a,b).length)}
+function used(id,type,year=st.year){return S.records.filter(r=>r.emp===id&&r.type===type&&r.date.startsWith(String(year))).reduce((a,r)=>a+effAmt(r),0)}
+const forOptions=()=>pubList().filter(x=>!isOffDay(x.date)&&!isCoHoliday(x.date));
+const holName=d=>{const x=pubList().find(y=>y.date===d);return x?x.name:''};
+function renderForChips(){const opts=forOptions(),one=picks.rec.size===1?[...picks.rec][0]:null;
+  const taken=new Set(one?S.records.filter(r=>r.emp===one&&r.type==='holiday'&&r.forHol).flatMap(r=>r.forHol):[]);
+  const keep=new Set([...document.querySelectorAll('#r-for input:checked')].map(i=>i.value));
+  $('r-for').innerHTML=opts.length?opts.map(x=>`<label class="${taken.has(x.date)?'usedup':''}"><input type="checkbox" value="${x.date}" ${keep.has(x.date)?'checked':''}>${esc(x.name)} ${new Date(x.date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'})}${taken.has(x.date)?' (ใช้แทนแล้ว)':''}</label>`).join('')
+    :'<span class="none">บริษัทหยุดครบทุกวันนักขัตฤกษ์ในรายการแล้ว</span>'}
 function quotaOf(type){return {holiday:st.holidayQuota,sick:st.sickQuota,personal:st.personalQuota,vacation:st.vacationQuota}[type]}
 function usedTotal(id,type){return type==='holiday'?used(id,'holiday')+fixedCount():used(id,type)}
 $('r-type').innerHTML=Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${k==='holiday'?'วันหยุดประเพณี (ลาแทนวันนักขัตฤกษ์)':v.t}</option>`).join('');
@@ -606,11 +627,12 @@ async function openCert(id){let d;if(MODE==='local'){try{d=JSON.parse(localStora
 async function dropCert(id){if(!id||S.records.some(r=>r.certId===id))return;try{if(MODE==='local')localStorage.removeItem('hr-demo-file-'+id);else await ref('files',id).delete()}catch(e){}}
 function autoAmt(){if($('r-type').value==='late')return;const a=$('r-date').value,b=$('r-to').value;if(!a)return;
   if(!b||b===a){$('r-amt').value=1;return}if(b<a)return;$('r-amt').value=workDaysIn(a,b).length}
-$('r-type').onchange=()=>{const late=$('r-type').value==='late';$('r-amt-label').textContent=late?'จำนวนนาทีที่สาย':'จำนวนวัน';$('r-amt').step=late?1:0.5;$('r-amt').min=late?1:0.5;
+$('r-type').onchange=()=>{const late=$('r-type').value==='late';$('r-for-wrap').hidden=$('r-type').value!=='holiday';if($('r-type').value==='holiday')renderForChips();$('r-amt-label').textContent=late?'จำนวนนาทีที่สาย':'จำนวนวัน';$('r-amt').step=late?1:0.5;$('r-amt').min=late?1:0.5;
   $('r-to-wrap').hidden=late;$('r-hint').hidden=late;const sick=$('r-type').value==='sick';$('r-cert-wrap').hidden=late;$('r-cert-hint').hidden=late;if(late)$('r-cert').value='';
   $('r-cert-label').textContent=sick?'แนบใบลา / ใบรับรองแพทย์ (สแกนหรือถ่ายรูป หรือ PDF ไม่เกิน 700 KB) ลาป่วยตั้งแต่ 3 วันทำงาน นายจ้างขอใบรับรองแพทย์ได้':'แนบใบลา (สแกนหรือถ่ายรูป หรือ PDF ไม่เกิน 700 KB) ไม่บังคับ';$('r-date-label').textContent=late?'วันที่':'ตั้งแต่วันที่';if(late){$('r-to').value='';$('r-amt').value=15}else autoAmt()};
 $('r-date').onchange=autoAmt;$('r-to').onchange=autoAmt;
-function renderRecords(){renderPicker($('rec-picker'),'rec');
+function renderRecords(){renderPicker($('rec-picker'),'rec');$('r-for-wrap').hidden=$('r-type').value!=='holiday';renderForChips();
+  $('rec-picker').querySelectorAll('input').forEach(i=>i.addEventListener('change',renderForChips));
   const meter=(u,q)=>`${u} / ${q}<span class="meter"><i class="${u>q?'over':''}" style="width:${q>0?Math.min(100,u/q*100):(u>0?100:0)}%"></i></span>`;
   const left=(u,q)=>q-u>=0?`<span class="hint">เหลือ ${q-u}</span>`:`<span class="hint neg">เกิน ${u-q} วัน</span>`;
   $('quota-table').innerHTML=`<thead><tr><th>พนักงาน</th><th>วันหยุดประเพณี (รวมวันที่บริษัทหยุด)</th><th>ลาป่วย</th><th>ลากิจ</th><th>ลาพักร้อน</th><th class="n">ขาด (วัน)</th><th class="n">สาย (นาที)</th></tr></thead><tbody>${
@@ -618,17 +640,17 @@ function renderRecords(){renderPicker($('rec-picker'),'rec');
   const view=$('r-view').value,m=$('r-month').value,fe=$('r-emp').value,yr=String(st.year);$('r-month-wrap').hidden=view==='year';
   const keepEmp=fe;$('r-emp').innerHTML='<option value="">ทุกคน</option>'+S.employees.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');$('r-emp').value=S.employees.some(e=>e.id===keepEmp)?keepEmp:'';
   let rows=S.records.filter(r=>(view==='year'?r.date.startsWith(yr):r.date.startsWith(m))&&(!fe||r.emp===fe));
-  if(view==='year'){const seen={};rows=rows.reduce((a,r)=>{if(!r.g){a.push(r);return a}if(seen[r.g]){seen[r.g].amount+=r.amount;return a}
-      const x={...r,date:r.gFrom||r.date,dateTo:r.gTo||r.dateTo,merged:true};seen[r.g]=x;a.push(x);return a},[]);rows.sort((a,b)=>a.date.localeCompare(b.date))}
+  if(view==='year'){const seen={};rows=rows.reduce((a,r)=>{if(!r.g){a.push(r);return a}if(seen[r.g]){seen[r.g].amount+=r.amount;seen[r.g].eff+=effAmt(r);return a}
+      const x={...r,date:r.gFrom||r.date,dateTo:r.gTo||r.dateTo,merged:true,eff:effAmt(r)};seen[r.g]=x;a.push(x);return a},[]);rows.sort((a,b)=>a.date.localeCompare(b.date))}
   else rows.sort((a,b)=>b.date.localeCompare(a.date));
   const e1=fe&&emp(fe);$('r-yearsum').hidden=!(view==='year'&&e1);
   if(view==='year'&&e1){const co=fixedCount(),lv=used(fe,'holiday');const box=(t,v,sub,over)=>`<div class="ys${over?' over':''}"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
-    $('r-yearsum').innerHTML=box(`วันหยุดประเพณี ปี ${+st.year+543}`,`${co+lv} / ${st.holidayQuota}`,`บริษัทหยุด ${co} · ลาแทน ${lv}`,co+lv>st.holidayQuota)
+    $('r-yearsum').innerHTML=box(`วันหยุดประเพณี ปี ${+st.year+543}`,`${co+lv} / ${st.holidayQuota}`,`บริษัทหยุด ${co} · ลาแทน ${lv}`+(()=>{const f=[...new Set(S.records.filter(r=>r.emp===fe&&r.type==='holiday'&&r.forHol&&r.date.startsWith(yr)).flatMap(r=>r.forHol))];return f.length?'<br>ใช้แทน: '+f.map(d=>esc(holName(d)||thDate(d))).join(', '):''})(),co+lv>st.holidayQuota)
       +box('ลาป่วย',`${used(fe,'sick')} / ${st.sickQuota}`,'',used(fe,'sick')>st.sickQuota)+box('ลากิจ',`${used(fe,'personal')} / ${st.personalQuota}`,'',used(fe,'personal')>st.personalQuota)
       +box('ลาพักร้อน',`${used(fe,'vacation')} / ${st.vacationQuota}`,'',used(fe,'vacation')>st.vacationQuota)+box('ลาไม่รับค่าจ้าง',`${used(fe,'unpaid')} วัน`)+box('ขาดงาน',`${used(fe,'absent')} วัน`)+box('มาสาย',`${used(fe,'late')} นาที`,`${S.records.filter(r=>r.emp===fe&&r.type==='late'&&r.date.startsWith(yr)).length} ครั้ง`)}
   const label=view==='year'?`ปี ${+st.year+543}`:thMonth(m);
   $('rec-table').innerHTML=`<thead><tr><th>วันที่ลา / หยุด</th><th>พนักงาน</th><th>ประเภท</th><th class="n">จำนวน</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>${
-   rows.map(r=>`<tr><td>${rangeText(r.date,r.dateTo)}${!r.merged&&r.g&&(r.gFrom!==r.date||r.gTo!==r.dateTo)?`<br><span class="hint">แบ่งตามงวดจ่าย · ลาทั้งช่วง ${rangeText(r.gFrom,r.gTo)}</span>`:''}</td><td>${esc(emp(r.emp)?.name||r.emp)}</td><td><span class="pill t-${r.type}">${TYPES[r.type].t}</span></td><td class="n">${Math.round(r.amount*100)/100} ${TYPES[r.type].u}</td><td>${esc(r.note)}${r.type!=='late'?(r.certId?` <button class="btn small" type="button" data-cert="${r.certId}">${r.type==='sick'?'ดูใบลา / ใบรับรองแพทย์':'ดูใบลา'}</button>`:` <button class="btn small attach" type="button" data-attach="${r.id}">แนบใบลา</button>`):''}</td><td><button class="btn small danger" data-r="${r.id}">ลบ</button></td></tr>`).join('')||`<tr><td colspan="6">ไม่มีรายการ${e1?'ของ '+esc(e1.name)+' ':''}ใน${label}</td></tr>`}</tbody>`;
+   rows.map(r=>`<tr><td>${rangeText(r.date,r.dateTo)}${!r.merged&&r.g&&(r.gFrom!==r.date||r.gTo!==r.dateTo)?`<br><span class="hint">แบ่งตามงวดจ่าย · ลาทั้งช่วง ${rangeText(r.gFrom,r.gTo)}</span>`:''}</td><td>${esc(emp(r.emp)?.name||r.emp)}</td><td><span class="pill t-${r.type}">${TYPES[r.type].t}</span>${r.forHol&&r.forHol.length?`<br><span class="hint">ใช้แทน ${r.forHol.map(d=>esc(holName(d)||thDate(d))).join(', ')}</span>`:''}</td><td class="n">${(()=>{const ef=r.merged?r.eff:effAmt(r);const q=Math.round(ef*100)/100;return r.type!=='late'&&ef<r.amount?`${q} ${TYPES[r.type].u}<br><span class="pill t-late">ตรงวันหยุด ไม่นับ ${Math.round((r.amount-ef)*100)/100} วัน</span>`:`${q} ${TYPES[r.type].u}`})()}</td><td>${esc(r.note)}${r.type!=='late'?(r.certId?` <button class="btn small" type="button" data-cert="${r.certId}">${r.type==='sick'?'ดูใบลา / ใบรับรองแพทย์':'ดูใบลา'}</button>`:` <button class="btn small attach" type="button" data-attach="${r.id}">แนบใบลา</button>`):''}</td><td><button class="btn small danger" data-r="${r.id}">ลบ</button></td></tr>`).join('')||`<tr><td colspan="6">ไม่มีรายการ${e1?'ของ '+esc(e1.name)+' ':''}ใน${label}</td></tr>`}</tbody>`;
   $('quota-table').querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{$('r-view').value='year';$('r-emp').value=b.dataset.yr;renderRecords();$('rec-list').scrollIntoView({behavior:'smooth',block:'start'})});
   $('rec-table').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r0=S.records.find(r=>r.id===+b.dataset.r);if(!r0)return;
     if(r0.g&&!b.classList.contains('armed')&&S.records.filter(r=>r.g===r0.g).length>1){b.classList.add('armed');b.textContent='กดอีกครั้ง ลบทั้งช่วง';setTimeout(()=>{b.classList.remove('armed');b.textContent='ลบ'},3000);return}
@@ -656,12 +678,13 @@ $('rec-form').onsubmit=async ev=>{ev.preventDefault();const ids=[...picks.rec];c
   if(dateTo!==date){const parts=[];daysBetween(date,dateTo).forEach(d=>{const k=d.slice(0,7)+(+d.slice(8)<=15?'a':'b');let P=parts.find(x=>x.k===k);if(!P){P={k,days:[]};parts.push(P)}P.days.push(d)});
     let left=amount;segs=parts.map((P,i)=>{const auto=P.days.filter(d=>!isOffDay(d)&&!isCoHoliday(d)).length;const a=i===parts.length-1?left:Math.min(auto,left);left=Math.round((left-a)*100)/100;
       return {date:P.days[0],dateTo:P.days[P.days.length-1],amount:a}}).filter(x=>x.amount>0);if(!segs.length)segs=[{date,dateTo,amount}]}
+  const forHol=type==='holiday'?[...document.querySelectorAll('#r-for input:checked')].map(i=>i.value):[];
   let certId;if(certFile){const btn=ev.target.querySelector('button[type=submit]');btn.disabled=true;flash(msg,'กำลังอัปโหลดใบลา...');
     try{certId=await saveCert(certFile,ids[0])}catch(err){btn.disabled=false;return flash(msg,err.message||authMsg(err),false)}btn.disabled=false}
   const note=$('r-note').value.trim();let nid=Math.max(0,...S.records.map(r=>r.id))+1;
   ids.forEach(id=>{const g=segs.length>1||dateTo!==date?newGroupId():undefined;
-    segs.forEach(x=>{const r={id:nid++,emp:id,type,date:x.date,dateTo:x.dateTo,amount:x.amount,note};if(g)Object.assign(r,{g,gFrom:date,gTo:dateTo});if(certId)r.certId=certId;S.records.push(r)})});
-  save();flash(msg,`บันทึก${TYPES[type].t} ${rangeText(date,dateTo)} ให้ ${ids.length} คนแล้ว`);$('r-month').value=date.slice(0,7);$('r-note').value='';$('r-to').value='';$('r-cert').value='';renderRecords()};
+    segs.forEach(x=>{const r={id:nid++,emp:id,type,date:x.date,dateTo:x.dateTo,amount:x.amount,note};if(g)Object.assign(r,{g,gFrom:date,gTo:dateTo});if(certId)r.certId=certId;if(forHol.length)r.forHol=forHol;S.records.push(r)})});
+  save();flash(msg,`บันทึก${TYPES[type].t} ${rangeText(date,dateTo)} ให้ ${ids.length} คนแล้ว`);$('r-month').value=date.slice(0,7);$('r-note').value='';$('r-to').value='';$('r-cert').value='';document.querySelectorAll('#r-for input').forEach(i=>i.checked=false);renderRecords()};
 
 /* ---------- payroll ---------- */
 const lastDay=m=>new Date(+m.slice(0,4),+m.slice(5),0).getDate();
@@ -669,7 +692,7 @@ const periodKey=(m,round)=>round===1?m+'#1':m;
 const roundList=round=>round===1?S.employees.filter(e=>e.cycle==='semi'):S.employees;
 function calc(e,m,round=2){const semi=e.cycle==='semi';const key=periodKey(m,round);const x=(S.extra[key]||{})[e.id]||{other:0,tax:0};
   const d1=semi&&round===2?16:1,d2=semi&&round===1?15:31;
-  const sum=t=>S.records.filter(r=>{if(r.emp!==e.id||r.type!==t||!r.date.startsWith(m))return false;const d=+r.date.slice(8,10);return d>=d1&&d<=d2}).reduce((a,r)=>a+r.amount,0);
+  const sum=t=>S.records.filter(r=>{if(r.emp!==e.id||r.type!==t||!r.date.startsWith(m))return false;const d=+r.date.slice(8,10);return d>=d1&&d<=d2}).reduce((a,r)=>a+effAmt(r),0);
   const f=semi?0.5:1,base=e.salary*f,fuel=e.fuel*f,phone=e.phone*f;
   const daily=e.salary/30,absentD=sum('absent'),unpaidD=sum('unpaid'),lateM=sum('late');
   const dAbsent=daily*absentD,dUnpaid=daily*unpaidD,dLate=daily/8/60*lateM,noSso=e.sso===false,sso=round===2&&!noSso?Math.min(e.salary,st.ssoCap)*st.ssoRate/100:0;
